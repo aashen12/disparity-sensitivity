@@ -7,7 +7,7 @@ library(bannerCommenter)
 
 
 # Number of observations
-n <- 600
+n <- 10
 
 # Generating data
 R <- sample(c(0, 1), n, replace = TRUE)
@@ -144,9 +144,31 @@ banner("Putting it all together", emph = TRUE)
 ###########################################################################
 
 
+# create weights for each scenario
 
+df_all <- df %>% select(Y, R, Ay1, Ay2) %>% 
+  arrange(desc(R)) %>% 
+  mutate(D = ifelse(R == 1, 1, NA))
 
+# create w_1 and w_0
+df_all <- df_all %>% mutate(w_1 = mean(R == 1) / pscore, w_0 = mean(R == 0) / (1 - pscore))
 
+# create w_r
+df_all <- df_all %>% mutate(w_r = ifelse(R == 1, w_1, w_0))
+
+# create w_rmpw
+df_all <- df_all %>% mutate(w_rmpw = w_1 * mean(M[R == 0] == "L3") / mean(M[R == 1] == "L3"))
+
+# duplicate rows with R == 1 and append to existing df_all
+df_all <- df_all %>% 
+  filter(R == 1) %>% 
+  mutate(D = 0) %>%
+  bind_rows(df_all)
+
+# observed disparity
+mu1hat <- with(df_all)
+
+mu1hat - mu0hat
 
 
 
