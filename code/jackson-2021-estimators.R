@@ -4,7 +4,6 @@ library(tidyverse)
 library(bannerCommenter)
 
 
-
 # Number of observations
 n <- 900
 
@@ -14,8 +13,6 @@ Ay1 <- rnorm(n)  # Background covariate 1
 Ay2 <- rnorm(n)  # Background covariate 2
 M <- sample(c("L1", "L2", "L3"), n, replace = TRUE) %>% factor() # mediator
 Y <- 2 + 7 * R + 0.2 * Ay1 + 0.5 * Ay2 + rnorm(n)
-
-
 
 df <- tibble(Y, R, Ay1, Ay2)
 
@@ -49,9 +46,6 @@ df_all <- df_all %>%
 # if R == 1, they are intervened on so they are weighted by the rmpw weight
 
 
-
-
-
 # compute each estimator
 mu1hat <- with(df_all, sum(w_r * R * Y) / sum(w_r * R))
 mu0hat <- with(df_all, sum(w_r * (1 - R) * Y) / sum(w_r * (1 - R)))
@@ -75,6 +69,7 @@ mod_reduction$coefficients["D"]
 
 # residual disparity
 mu_10 - mu0hat
+
 mod_resid <- lm(Y ~ R, data = df_all[df_all$D == 0, ], weights = w_residual)
 mod_resid$coefficients["R"]
 
