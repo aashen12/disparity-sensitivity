@@ -1,4 +1,4 @@
-set.seed(123)
+set.seed(12)
 
 library(tidyverse)
 library(bannerCommenter)
@@ -54,7 +54,7 @@ mu_10 <- with(df_all, sum(w_rmpw * R * (1 - D) * Y) / sum(w_rmpw * R * (1 - D)))
 # observed disparity
 mu1hat - mu0hat
 
-mod_obs <- lm(Y ~ R, data = df_all, weights = w_r)
+mod_obs <- lm(Y ~ R, data = df_all %>% filter(D == 0), weights = w_r)
 mod_obs$coefficients["R"]
 
 
@@ -62,7 +62,7 @@ mod_obs$coefficients["R"]
 # disparity reduction
 mu1hat - mu_10
 
-mod_reduction <- lm(Y ~ D, data = df_all[df_all$R == 1, ], weights = w_reduction)
+mod_reduction <- lm(Y ~ D, data = df_all %>% filter(R == 1), weights = w_reduction)
 mod_reduction$coefficients["D"]
 
 
@@ -70,7 +70,7 @@ mod_reduction$coefficients["D"]
 # residual disparity
 mu_10 - mu0hat
 
-mod_resid <- lm(Y ~ R, data = df_all[df_all$D == 0, ], weights = w_residual)
+mod_resid <- lm(Y ~ R, data = df_all %>% filter(D == 0), weights = w_residual)
 mod_resid$coefficients["R"]
 
 
