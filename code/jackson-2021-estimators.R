@@ -5,20 +5,32 @@ library(bannerCommenter)
 
 
 # Number of observations
-n <- 900
+n <- 10
 
 # Generating data
-R <- sample(c(0, 1), n, replace = TRUE)
+R <- rbinom(n, 1, 0.5)
 Ay1 <- rnorm(n)  # Background covariate 1
 Ay2 <- rnorm(n)  # Background covariate 2
-M <- sample(c("L1", "L2", "L3"), n, replace = TRUE) %>% factor() # mediator
-Y <- 2 + 7 * R + 0.2 * Ay1 + 0.5 * Ay2 + rnorm(n)
 
-df <- tibble(Y, R, Ay1, Ay2)
+# generate M with values dependent on R
+
+# category[race == 1] <- sample(c("A", "B", "C"), sum(race == 1), replace = TRUE, prob = c(0.5, 0.3, 0.2))
+# category[race == 0] <- sample(c("A", "B", "C"), sum(race == 0), replace = TRUE, prob = c(0.2, 0.3, 0.5))
+
+M <- character(n)
+M[R == 1] <- sample(c("L1", "L2", "L3"), sum(R == 1), replace = TRUE, prob = c(0.1, 0.2, 0.7))
+M[R == 0] <- sample(c("L1", "L2", "L3"), sum(R == 0), replace = TRUE, prob = c(0.2, 0.3, 0.5))
+
+cat_coefs <- ifelse(M == "L1", 2, 
+                    ifelse(M == "L2", 4, 7))
+
+Y <- 2 + 7 * R + 0.2 * Ay1 + 0.5 * Ay2 + cat_coefs + rnorm(n)
+
+df <- tibble(Y, R, Ay1, Ay2, M)
 
 pscore <- glm(R ~ Ay1 + Ay2, family = "binomial", data = df)$fitted.values
 
-df_all <- df %>% select(Y, R, Ay1, Ay2) %>% 
+df_all <- df %>% select(Y, R, Ay1, Ay2, M) %>% 
   arrange(desc(R)) %>% 
   mutate(D = ifelse(R == 1, 1, 0))
 # if race == 1, D == 1 for now since we have not duplicated R == 1 yet
@@ -47,7 +59,7 @@ df_all <- df_all %>%
 
 
 # compute each estimator
-mu1hat <- with(df_all, sum(w_r * R * Y) / sum(w_r * R))
+mu1hat <- with(df_all, sum(w_r * R * D * Y) / sum(w_r * D * R))
 mu0hat <- with(df_all, sum(w_r * (1 - R) * Y) / sum(w_r * (1 - R)))
 mu_10 <- with(df_all, sum(w_rmpw * R * (1 - D) * Y) / sum(w_rmpw * R * (1 - D)))
 
