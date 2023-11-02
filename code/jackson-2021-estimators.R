@@ -63,8 +63,15 @@ mu1hat <- with(df_all, sum(w_r * R * D * Y) / sum(w_r * D * R))
 mu0hat <- with(df_all, sum(w_r * (1 - R) * Y) / sum(w_r * (1 - R)))
 mu_10 <- with(df_all, sum(w_rmpw * R * (1 - D) * Y) / sum(w_rmpw * R * (1 - D)))
 
+
+# compute each estimator: rewrite based on spi feedback
+mu1hat2 <- with(df_all %>% filter(D == 0), sum(w_r * R * Y) / sum(w_r * R))
+mu0hat2 <- with(df_all %>% filter(D == 0), sum(w_r * (1 - R) * Y) / sum(w_r * (1 - R)))
+mu_102 <- with(df_all %>% filter(D == 0), sum(w_rmpw * R * Y) / sum(w_rmpw * R))
+
 # observed disparity
 mu1hat - mu0hat
+mu1hat2 - mu0hat2
 
 mod_obs <- lm(Y ~ R, data = df_all %>% filter(D == 0), weights = w_r)
 mod_obs$coefficients["R"]
@@ -73,6 +80,7 @@ mod_obs$coefficients["R"]
 
 # disparity reduction
 mu1hat - mu_10
+mu1hat2 - mu_102
 
 mod_reduction <- lm(Y ~ D, data = df_all %>% filter(R == 1), weights = w_reduction)
 mod_reduction$coefficients["D"]
@@ -81,6 +89,7 @@ mod_reduction$coefficients["D"]
 
 # residual disparity
 mu_10 - mu0hat
+mu_102 - mu0hat2
 
 mod_resid <- lm(Y ~ R, data = df_all %>% filter(D == 0), weights = w_residual)
 mod_resid$coefficients["R"]
