@@ -1,5 +1,11 @@
 library(Matching)
 library(tidyverse)
+library(latex2exp)
+
+andy_ggplot_theme <- function(bs = 20) {
+  theme_minimal(base_size = bs) + 
+    theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+}
 
 data("lalonde")
 
@@ -113,7 +119,6 @@ upper_pe_resid <- residual + bias
 
 df_resid <- data.frame(R2 = round(R2, 3), bias, lower_pe_resid, upper_pe_resid) 
 
-bs <- 20
 
 # make plot with using ggplot with R2 on x-axis (discretized) and estimated residual on y-axis with error bars for lower and upper bounds
 df_resid %>% 
@@ -122,12 +127,14 @@ df_resid %>%
                 width = 0.5, linewidth = 2, alpha = 0.8) + 
   geom_point(y = residual, color = "black", size = 6) +
   geom_hline(yintercept = 0, linewidth = 1, alpha = 0.5) + 
-  theme_minimal(base_size = bs) + 
-  labs(x = expression(R^2), y = "Residual disparity")
+  labs(x = expression(R^2), y = TeX(r'($\hat{\mu}_1^0 - \hat{\mu}_0$)'), title = "Residual Disparity") + 
+  andy_ggplot_theme(22)
+  
 
 
 
-R2 <- c(R2_reduction, seq(0.1, 0.6, by = 0.1))
+
+R2 <- seq(R2_reduction, 0.1, by = 0.02)
 bias <- optBias(R2)
 lower_pe_reduc <- reduction - bias
 upper_pe_reduc <- reduction + bias
@@ -140,11 +147,11 @@ df_reduc <- data.frame(R2 = round(R2, 3), bias, lower_pe_reduc, upper_pe_reduc)
 df_reduc %>% 
   ggplot(aes(x = as.character(R2))) + 
   geom_errorbar(aes(ymin = lower_pe_reduc, ymax = upper_pe_reduc), color = "firebrick1", 
-                width = 0.5, linewidth = 1.3, alpha = 0.8) + 
+                width = 0.5, linewidth = 1.7, alpha = 0.8) + 
   geom_point(y = reduction, color = "black", size = 3.5) +
   geom_hline(yintercept = 0, linewidth = 1, alpha = 0.5) + 
-  theme_minimal(base_size = bs) + 
-  labs(x = expression(R^2), y = "Reduction in disparity")
+  labs(x = TeX(r'($R^2$)'), y = TeX(r'($\hat{\mu}_1 - \hat{\mu}_1^0$)'), title = "Disparity Reduction") + 
+  andy_ggplot_theme(22)
   
 
 
