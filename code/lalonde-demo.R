@@ -140,8 +140,8 @@ df_reduc <- data.frame(R2 = round(R2, 3), bias, lower_pe_reduc, upper_pe_reduc)
 df_reduc %>% 
   ggplot(aes(x = as.character(R2))) + 
   geom_errorbar(aes(ymin = lower_pe_reduc, ymax = upper_pe_reduc), color = "firebrick1", 
-                width = 0.5, linewidth = 2, alpha = 0.8) + 
-  geom_point(y = reduction, color = "black", size = 2) +
+                width = 0.5, linewidth = 1.3, alpha = 0.8) + 
+  geom_point(y = reduction, color = "black", size = 3.5) +
   geom_hline(yintercept = 0, linewidth = 1, alpha = 0.5) + 
   theme_minimal(base_size = bs) + 
   labs(x = expression(R^2), y = "Reduction in disparity")
