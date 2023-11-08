@@ -1,6 +1,7 @@
 library(Matching)
 library(tidyverse)
 
+data("lalonde")
 
 lalonde <- lalonde %>% 
   mutate(race = ifelse(black == 0 & hisp == 0, "white", "not_white")) %>% 
@@ -69,5 +70,84 @@ residual
 lalonde %>% group_by(black) %>% 
   summarise(me = mean(re78)) %>% 
   mutate(diff = diff(me)) %>% data.frame()
+
+lalonde %>% group_by(treat) %>% 
+  summarise(me = mean(re78)) %>% 
+  mutate(diff = diff(me)) %>% data.frame()
+
+mu1
+mu_10
+
+optBias <- function(R2) {
+  corr_bound <- 1 - cor(lalonde$w_rmpw[lalonde$black == 1], lalonde$re78[lalonde$black == 1])^2
+  imbalance <- R2 / (1 - R2)
+  scaling <- var(lalonde$re78[lalonde$black == 1]) * var(lalonde$w_rmpw[lalonde$black == 1]) 
+  return(sqrt(corr_bound * imbalance * scaling))
+}
+
+invOptBias <- function(bias) {
+  corr_bound <- 1 - cor(lalonde$w_rmpw[lalonde$black == 1], lalonde$re78[lalonde$black == 1])^2
+  imbalance <- bias^2 / (corr_bound * var(lalonde$re78[lalonde$black == 1]) * var(lalonde$w_rmpw[lalonde$black == 1]))
+  return(imbalance / (1 + imbalance))
+}
+
+
+R2_reduction <- invOptBias(reduction) 
+print(
+  paste0("If an unmeasured confounder explains at least ", 
+         round(R2_reduction * 100, 2), "% of the variation in the true weights, then the disparity reduction becomes zero.")
+) 
+
+R2_residual <- invOptBias(residual)
+print(
+  paste0("If an unmeasured confounder explains at least ", 
+         round(R2_residual * 100, 2), "% of the variation in the true weights, then the disparity remaining becomes zero.")
+) 
+
+R2 <- c(seq(0.1, 0.6, by = 0.1), R2_residual, 0.7)
+bias <- optBias(R2)
+# lower_pe_reduc <- reduction - bias
+# upper_pe_reduc <- reduction + bias
+lower_pe_resid <- residual - bias
+upper_pe_resid <- residual + bias
+
+df_resid <- data.frame(R2 = round(R2, 3), bias, lower_pe_resid, upper_pe_resid) 
+
+bs <- 20
+
+# make plot with using ggplot with R2 on x-axis (discretized) and estimated residual on y-axis with error bars for lower and upper bounds
+df_resid %>% 
+  ggplot(aes(x = as.character(R2))) + 
+  geom_errorbar(aes(ymin = lower_pe_resid, ymax = upper_pe_resid), color = "dodgerblue2", 
+                width = 0.5, linewidth = 2, alpha = 0.8) + 
+  geom_point(y = residual, color = "black", size = 6) +
+  geom_hline(yintercept = 0, linewidth = 1, alpha = 0.5) + 
+  theme_minimal(base_size = bs) + 
+  labs(x = expression(R^2), y = "Residual disparity")
+
+
+
+R2 <- c(R2_reduction, seq(0.1, 0.6, by = 0.1))
+bias <- optBias(R2)
+lower_pe_reduc <- reduction - bias
+upper_pe_reduc <- reduction + bias
+
+
+df_reduc <- data.frame(R2 = round(R2, 3), bias, lower_pe_reduc, upper_pe_reduc)
+
+# make plot with using ggplot with R2 on x-axis (discretized) and estimated reduction on y-axis with error bars for lower and upper bounds
+
+df_reduc %>% 
+  ggplot(aes(x = as.character(R2))) + 
+  geom_errorbar(aes(ymin = lower_pe_reduc, ymax = upper_pe_reduc), color = "firebrick1", 
+                width = 0.5, linewidth = 2, alpha = 0.8) + 
+  geom_point(y = reduction, color = "black", size = 2) +
+  geom_hline(yintercept = 0, linewidth = 1, alpha = 0.5) + 
+  theme_minimal(base_size = bs) + 
+  labs(x = expression(R^2), y = "Reduction in disparity")
+  
+
+
+
 
 
