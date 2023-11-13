@@ -110,7 +110,7 @@ print(
          round(R2_residual * 100, 2), "% of the variation in the true weights, then the disparity remaining becomes zero.")
 ) 
 
-R2 <- c(seq(0.1, 0.6, by = 0.1), R2_residual, 0.7)
+R2 <- c(seq(0.4, 0.6, by = 0.2), R2_residual, 0.8, 0.9)
 bias <- optBias(R2)
 # lower_pe_reduc <- reduction - bias
 # upper_pe_reduc <- reduction + bias
@@ -134,7 +134,7 @@ df_resid %>%
 
 
 
-R2 <- seq(R2_reduction, 0.1, by = 0.02)
+R2 <- seq(R2_reduction, 0.1, by = 0.03)
 bias <- optBias(R2)
 lower_pe_reduc <- reduction - bias
 upper_pe_reduc <- reduction + bias
