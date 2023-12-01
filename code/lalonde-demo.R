@@ -29,7 +29,7 @@ lalonde %>%
   group_by(black, treat) %>% 
   summarise(mean(re78), mean(educ), mean(nodegr), mean(u74), mean(u75))
 
-lalonde %>% group_by(treat) %>% 
+lalonde %>% group_by(treat, black) %>% 
   summarise(mean(re78))
 
 lalonde %>% group_by(race) %>% 
