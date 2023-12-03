@@ -129,6 +129,7 @@ df_resid %>%
   geom_hline(yintercept = 0, linewidth = 1, alpha = 0.5) + 
   labs(x = expression(R^2), y = TeX(r'($\hat{\mu}_1^0 - \hat{\mu}_0$)'), title = "Residual Disparity") + 
   andy_ggplot_theme(22)
+ggsave("~/Downloads/residual_disparity.png", width = 8, height = 6)
   
 
 
@@ -152,6 +153,7 @@ df_reduc %>%
   geom_hline(yintercept = 0, linewidth = 1, alpha = 0.5) + 
   labs(x = TeX(r'($R^2$)'), y = TeX(r'($\hat{\mu}_1 - \hat{\mu}_1^0$)'), title = "Disparity Reduction") + 
   andy_ggplot_theme(22)
+ggsave("~/Downloads/reduction_disparity.png", width = 8, height = 6)
   
 
 
