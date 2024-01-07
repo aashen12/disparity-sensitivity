@@ -93,6 +93,10 @@ cf2
 cf3
 
 
+## Total disparity
+
+tot_disp <- lm(re78 ~ black, data = lalonde)$coef[2]
+mu1 - mu0
 
 
 ##################################################################
@@ -114,7 +118,7 @@ df_reduction <- bind_rows(
   df_black %>% mutate(D = 0)
 )
 
-disp_reduction <- lm(re78 ~ D, data = df_reduction, weights = ifelse(D == 1, w_rmpw, 1))$coef[2]
+disp_reduction <- lm(re78 ~ D, data = df_reduction, weights = ifelse(D == 0, w_rmpw, 1))$coef[2]
 disp_reduction
 mu1 - c(cf1, cf2, cf3)
 
