@@ -45,6 +45,13 @@ lalonde <- lalonde %>% mutate(
   w_rmpw = ifelse(treat == 1, w1, w0)
 )
 
+
+lalonde %>% 
+  #filter(black == 0) %>% 
+  ggplot(aes(x = w_rmpw, fill = factor(black))) + 
+  geom_density(color = "black", alpha = 0.5) + 
+  theme_bw()
+
 mu0 <- with(
   lalonde,
   sum(re78 * (1 - black)) / sum(1 - black)
