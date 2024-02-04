@@ -103,6 +103,7 @@ cf3
 ## Total disparity
 
 tot_disp <- lm(re78 ~ black, data = lalonde)$coef[2]
+tot_disp
 mu1 - mu0
 
 
