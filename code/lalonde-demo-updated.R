@@ -42,7 +42,7 @@ e1 <- glm(treat ~ age + married + educ + nodegr, family = "binomial", data = lal
 lalonde <- lalonde %>% mutate(
   w1 = e0 / e1,
   w0 = (1 - e0) / (1 - e1),
-  w_rmpw = ifelse(treat == 1, w1, w0)
+  w_rmpw = w1 * treat + w0 *(1 - treat)
 )
 
 
