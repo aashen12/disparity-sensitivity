@@ -39,6 +39,17 @@ lalonde %>% group_by(race) %>%
 e0 <- glm(treat ~ age + married, family = "binomial", data = lalonde, weights = 1 - black)$fitted.values
 e1 <- glm(treat ~ age + married + educ + nodegr, family = "binomial", data = lalonde, weights = black)$fitted.values
 
+o1 <- lm(re78 ~  age + married, data = lalonde, weights = treat)
+o0 <- lm(re78 ~  age + married, data = lalonde, weights = 1 - treat)
+
+df_outcomes <- data.frame(o1 = o1$fitted.values, o0 = o0$fitted.values)
+df_outcomes %>% 
+  pivot_longer(cols = everything(), names_to = "model", values_to = "mu") %>% 
+  ggplot(aes(x = mu, fill = model)) + 
+  geom_histogram(color = "black") + 
+  andy_ggplot_theme()
+
+
 lalonde <- lalonde %>% mutate(
   w1 = e0 / e1,
   w0 = (1 - e0) / (1 - e1),
