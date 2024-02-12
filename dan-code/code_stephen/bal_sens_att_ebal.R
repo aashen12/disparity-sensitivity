@@ -12,29 +12,31 @@
 #' @export
 #'
 
-bootsens.os <- function(Z, X, Y, Lambda = 1, alpha = 0.05, estimand = "att", reg.adjust = FALSE, parallel = TRUE, B = 1000, warm.start = FALSE) {
-
-    estimand <- match.arg(estimand, "att")
-
-    no.cores <- ifelse(parallel, detectCores(), 1)
-    n <- length(Z)
-
-    if (warm.start) {
-        start <- glm(Z ~ X, family = "binomial")$coefs
-    } else {
-        start <- NULL
-    }
-
-    out <- mclapply(1:B, function(iter) {
-        s <- sample(1:n, n, TRUE);
-        res <- tryCatch(extrema.os(Z[s], X[s, ], Y[s], Lambda, estimand, reg.adjust, start),
-                        error = function(e) {print(e)});
-        res},
-        mc.cores = no.cores)
-    out <- do.call(rbind, out)
-
-    c(quantile(out[, 1], alpha / 2, na.rm = TRUE), quantile(out[, 2], 1 - alpha / 2, na.rm = TRUE))
-
+bootsens.os <- function(Z, X, Y, Lambda = 1, alpha = 0.05, estimand = "att", 
+                        reg.adjust = FALSE, parallel = TRUE, B = 1000, 
+                        warm.start = FALSE) {
+  
+  estimand <- match.arg(estimand, "att")
+  
+  no.cores <- ifelse(parallel, detectCores(), 1)
+  n <- length(Z)
+  
+  if (warm.start) {
+    start <- glm(Z ~ X, family = "binomial")$coefs
+  } else {
+    start <- NULL
+  }
+  
+  out <- mclapply(1:B, function(iter) {
+    s <- sample(1:n, n, TRUE);
+    res <- tryCatch(extrema.os(Z[s], X[s, ], Y[s], Lambda, estimand, reg.adjust, start),
+                    error = function(e) {print(e)});
+    res},
+    mc.cores = no.cores)
+  out <- do.call(rbind, out)
+  
+  c(quantile(out[, 1], alpha / 2, na.rm = TRUE), quantile(out[, 2], 1 - alpha / 2, na.rm = TRUE))
+  
 }
 
 
@@ -48,20 +50,20 @@ bootsens.os <- function(Z, X, Y, Lambda = 1, alpha = 0.05, estimand = "att", reg
 #' @import stats
 #' @export
 #'
+
 extrema.os <- function(Z, X, Y, Lambda = 1, estimand = "att", reg.adjust = FALSE, start = NULL) {
-
-    estimand <- match.arg(estimand, "att")
-    
-    if (estimand == "att") {
-        if (!is.null(start)) {
-            mean(Y[Z == 1]) - rev(extrema.md(Z, X, Y, Lambda, "missing", reg.adjust, - start))
-        } else {
-            mean(Y[Z == 1]) - rev(extrema.md(Z, X, Y, Lambda, "missing", reg.adjust))
-        }
+  
+  estimand <- match.arg(estimand, "att")
+  
+  if (estimand == "att") {
+    if (!is.null(start)) {
+      mean(Y[Z == 1]) - rev(extrema.md(Z, X, Y, Lambda, "missing", reg.adjust, - start))
+    } else {
+      mean(Y[Z == 1]) - rev(extrema.md(Z, X, Y, Lambda, "missing", reg.adjust))
     }
-
+  }
+  
 }
-
 
 #' @describeIn bootsens.md Obtain extrema of IPW estimator for missing data
 #'
@@ -138,4 +140,48 @@ get.extrema <- function(Z, X, Y, Lambda = 1, weight_x, estimand = "missing") {
     
     c(minimum, maximum)
     
+}
+
+
+getExtremaZhao <- function(A, X, Y, gamma = 0, fitted.prob, estimand = c("all", "missing")) {
+  estimand <- match.arg(estimand, c("all", "missing"))
+  c <- as.numeric(estimand == "all")
+  # c = 1 if estimand == all, 0 if estimand == missing
+  # this is the idea that in ATE, we use w - 1 / w* - 1 but in ATT it's w/w*
+  
+  fitted.logit <- qlogis(fitted.prob) # gives a "z-score" or quantile of the propensity scores
+  # this number is log(\pi / 1 - \pi) = g(X) = \beta'X
+  
+  eg <- exp(-fitted.logit)
+  # technically e^{-g(X_i)}
+  
+  eg <- eg[A != 0]
+  Y <- Y[A != 0]
+  A <- A[A != 0]
+  # get rid of control obs
+  
+  eg <- eg[order(-Y)]
+  A <- A[order(-Y)]
+  Y <- Y[order(-Y)]
+  # order in from largest to smallest
+  
+  ## maximization
+  num.each.low <- A * Y * (c + exp(-gamma) * eg)
+  num.each.up <- A * Y * (c + exp(gamma) * eg)
+  num <- c(0, cumsum(num.each.up)) + c(rev(cumsum(rev(num.each.low))), 0)
+  
+  den.each.low <- A * (c + exp(-gamma) * eg)
+  den.each.up <- A * (c + exp(gamma) * eg)
+  den <- c(0, cumsum(den.each.up)) + c(rev(cumsum(rev(den.each.low))), 0)
+  
+  maximum <- max(num / den)
+  ## print(den[which.max(num/den)] / n)
+  
+  ## minimization
+  num <- c(0, cumsum(num.each.low)) + c(rev(cumsum(rev(num.each.up))), 0)
+  den <- c(0, cumsum(den.each.low)) + c(rev(cumsum(rev(den.each.up))), 0)
+  minimum <- min(num / den)
+  ## print(den[which.min(num/den)] / n)
+  
+  c(minimum, maximum)
 }

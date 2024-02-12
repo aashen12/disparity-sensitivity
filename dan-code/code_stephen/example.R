@@ -1,11 +1,11 @@
 # load package
-source("./bal_sens_att_ebal.R")
+source("bal_sens_att_ebal.R")
 #install.packages("ebal")
 
 library(parallel)
 
 # load data
-load("./data/nhanes.fish.rda")
+load("data/nhanes.fish.rda")
 
 # treatment vector
 Z <- as.numeric(nhanes.fish$fish.level == "high")

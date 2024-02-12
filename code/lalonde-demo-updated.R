@@ -56,6 +56,8 @@ lalonde <- lalonde %>% mutate(
   w_rmpw = w1 * treat + w0 *(1 - treat)
 )
 
+write_csv(lalonde, file = "../data/lalonde_with_weights.csv")
+
 
 lalonde %>% 
   #filter(black == 0) %>% 
@@ -151,4 +153,7 @@ lalonde %>% group_by(black) %>%
 mu1
 mu0
 
-# test
+
+
+
+
