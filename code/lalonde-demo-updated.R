@@ -154,6 +154,35 @@ mu1
 mu0
 
 
+## Testing Fractional LP ##
+
+## Test on LaLonde data ##
+
+source("extrema_and_bootstrap_demo.R")
+
+lalonde <- read_csv("../data/lalonde_with_weights.csv")
+
+extrema <- getExtrema(G = lalonde$black, Y = lalonde$re78, 
+                      gamma = 0.05, w = lalonde$w_rmpw, estimand = "redu")
+extrema
+
+
+mu0 <- with(lalonde, sum(re78 * (1 - black)) / sum(1 - black))
+mu1 <- with(lalonde, sum(re78 * black) / sum(black))
+mu_10 <- with(lalonde, sum(w_rmpw * re78 * black) / sum(w_rmpw * black))
+
+disp_residual <- lm(re78 ~ black, data = lalonde, weights = ifelse(black == 1, w_rmpw, 1))$coef[2]
+cat("Disparity Residual:", disp_residual, "\n")
+mu_10 - mu0
+
+df_black <- lalonde %>% filter(black == 1)
+df_reduction <- bind_rows(df_black %>% mutate(D = 1), df_black %>% mutate(D = 0))
+disp_reduction <- lm(re78 ~ D, data = df_reduction, weights = ifelse(D == 0, w_rmpw, 1))$coef[2]
+cat("Disparity Reduction:", disp_reduction, "\n")
+mu1 - mu_10
+
+
+
 
 
 

@@ -43,3 +43,4 @@ bootsens.os(Z,X,Y, Lambda = 7.39, estimand = 'att', alpha = 0.1)
 # Lambda = 20.09
 extrema.os(Z,X,Y, Lambda = 20.09, estimand = 'att')
 bootsens.os(Z,X,Y, Lambda = 20.09, estimand = 'att', alpha = 0.1)
+
