@@ -1,3 +1,0 @@
-bash 01_set_inputs.sh
-bash 02_get_covs_treat_outcome.sh
-bash 03_plot_amplification.sh

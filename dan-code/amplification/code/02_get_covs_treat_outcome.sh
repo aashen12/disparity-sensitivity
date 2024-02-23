@@ -1,1 +1,0 @@
-R CMD BATCH 02_get_covs_treat_outcome.R
