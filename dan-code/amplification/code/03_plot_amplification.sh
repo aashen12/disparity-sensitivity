@@ -1,0 +1,1 @@
+R -e "Sys.setenv(RSTUDIO_PANDOC='/Applications/RStudio.app/Contents/MacOS/pandoc'); rmarkdown::render('03_plot_amplification.R', output_file =paste0('../', readRDS('../inputs/input_df.rds')$data,'/output/amplification.pdf'))"
