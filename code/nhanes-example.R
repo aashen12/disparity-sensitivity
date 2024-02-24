@@ -339,21 +339,22 @@ p1 <- df_plot %>%
   metR::geom_text_contour(aes(z = bias), 
                           breaks = bins, 
                           stroke = 0.2, skip = 0) + 
-  metR::geom_contour_fill(breaks = c(maxbias, 1000 * maxbias), fill='blue', alpha = 0.3)+
+  metR::geom_contour_fill(breaks = c(maxbias, 1000 * maxbias), fill='blue', alpha = 0.2) +
   geom_contour(breaks = c(maxbias), col='blue', size=1) 
 
 p1
 
 p1_full <- p1 + geom_point(data = strongest_cov_df[1:num_cov,], 
-             aes(x = imbal_wt, y = coeff, z = 0)) + 
+             aes(x = imbal, y = coeff, z = 0)) + 
   ggrepel::geom_label_repel(data = strongest_cov_df[1:num_cov,], 
-                            aes(x = imbal_wt, y = coeff, z = 0, label = covar),
-                            nudge_y = 0.05, nudge_x = 0.5,  fill='white')
+                            aes(x = imbal, y = coeff, z = 0, label = covar),
+                            nudge_y = 0.05, nudge_x = 0.5, label.padding = 0.1,
+                            point.padding = 0.1)
 p1_full
 
 p1_full + 
   scale_x_continuous(name = "absolute standardized imbalance in U", limits = c(0, max(max_imbal_stnd, 1))) +
-  scale_y_continuous(name = TeX("absolute $\\beta_u$"), limits = c(0, max(max_betau_01, betauFun(0.05))))
+  scale_y_continuous(name = TeX("absolute $\\beta_u$"), limits = c(0, max(max_betau_01, betauFun(0.03))))
 
 ggplot() +
   #geom_line(data = mycurve1, aes(x = x, y = y), color = "black", linewidth = 0.7) + # plots calibration curve
