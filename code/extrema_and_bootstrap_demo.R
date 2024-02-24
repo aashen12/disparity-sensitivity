@@ -137,10 +137,10 @@ plotAmplificationBeta <- function(Z, X, Y, bound, Lambda, w, num_cov = 8, num_la
   
   # max of coefficients for observed except intercept
   # each coefficient is with one variable standardized (U) and rest of variables not standardized
-  #coeffs <- numeric()
-  #for (var in 1:ncol(X_control)) {
+  # coeffs <- numeric()
+  # for (var in 1:ncol(X_control)) {
   #  coeffs[var] <- lm(Y[Z==0]~X_control[,-var] + X_control_stnd[, var])$coef["X_control_stnd[, var]"]
-  #}
+  # }
   
   # equivalent to above is running on all standardized vars at same time
   coeffs <- lm(Y[Z==0]~X_control_stnd)$coef[-1]
