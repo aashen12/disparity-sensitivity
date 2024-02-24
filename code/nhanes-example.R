@@ -184,101 +184,12 @@ bootci
 bounds <- decompsens::getBiasBounds(G, Z, XA, XN, Y, Lambda = Lam)
 str(bounds)
 
-bounds[[1]] # muh - mu
-bounds[[2]] # point estimate
-
-maxbias <- max(abs(bounds[[1]]))
-maxbias
+strongest_cov_df
 
 ####################################################
 # Standardize observed covariates for control units
 ####################################################
 
-X_G1 <- X[G == 1, -1]
-
-# standardize X for control units
-# center and make var = sd = 1
-X_G1_stnd <- apply(X_G1, MARGIN = 2, FUN = function(x) {scale(x)})
-
-#################################################################
-# Compute max coefficient among standardized observed covariates
-#################################################################
-
-coeffs_old <- numeric(ncol(X_G1))
-for (var in 1:ncol(X_G1)) {
-  coeffs_old[var] <- lm(Y[G==1] ~ X_G1[,-var] + X_G1_stnd[, var])$coef["X_G1_stnd[, var]"]
-}
-max(abs(coeffs_old))
-# coeffs_old is equivalent to:
-
-mod_matrix_y <- data.frame(y = Y[G==1], model.matrix(~ . - 1, data = X_G1_stnd %>% data.frame()))
-
-coeffs <- lm(y ~ ., data = mod_matrix_y)$coef[-1]
-max_betau_01 <- max(abs(coeffs))
-max_betau_01
-
-
-########################################################
-# Compute maximum imbalance for standardized covariates
-########################################################
-
-X_stnd <- apply(X[, 2:ncol(X)], MARGIN = 2, FUN = function(x) {scale(x)})
-
-
-imbal_stnd <- colMeans(X_stnd[G == 1, ]) - colMeans(X_stnd[G == 0, ])
-max_imbal_stnd <- max(abs(imbal_stnd))
-max_imbal_stnd
-mean(abs(imbal_stnd))
-
-####################################################
-# Compute imbalance in covariates after weighting
-####################################################
-
-
-# imbal_stnd_weight <- colMeans(X_stnd[Z == 1,]) - colSums(X_stnd[Z == 0,]*w/sum(w))
-
-####################################################
-# Compute imbalance in covariates between G=0 and G=1_int after weighting for mu_10 
-####################################################
-
-w <- bounds[[3]]
-
-imbal_stnd_weight <- colMeans(X_stnd[G == 0, ]) - colSums(X_stnd[G == 1, ] * (w[G == 1] / sum(w[G == 1]))) 
-max_imbal_stnd_wt <- max(abs(imbal_stnd_weight))
-max_imbal_stnd_wt
-mean(abs(imbal_stnd_weight))
-
-####################################################
-# Compute imbalance in Group G = 1 after weighting for mu_10 
-####################################################
-
-w <- bounds[[3]]
-
-imbal_stnd_weight <- colMeans(X_G1_stnd) - colSums(X_G1_stnd * (w[G == 1] / sum(w[G == 1])))
-max_imbal_stnd_wt <- max(abs(imbal_stnd_weight))
-max_imbal_stnd_wt
-mean(abs(imbal_stnd_weight))
-
-
-
-####################################################
-# Get coordinates for strongest observed covariates to plot
-####################################################
-# get coefficients
-coeff_df <- data.frame(
-  covar = gsub("X_stnd[G == 1, ]", "", names(coeffs)),
-  coeff = abs(as.numeric(coeffs)))
-
-# get imbal
-imbal_df <- data.frame(
-  covar = names(imbal_stnd),
-  imbal = abs(as.numeric(imbal_stnd)),
-  imbal_wt = abs(as.numeric(imbal_stnd_weight)))
-# merge coefficients and imbalance, arrange from largest to smallest by imbal * beta_u
-strongest_cov_df <- dplyr::inner_join(coeff_df, imbal_df, by = "covar") %>%
-  dplyr::arrange(desc(coeff*imbal))
-
-strongest_cov_df
 
 #######
 # Plot
