@@ -116,7 +116,6 @@ w_rmpw[G == 1] %>% summary()
 
 #w_rmpw <- pmin(w_rmpw, 5)
 
-w_rmpw[G == 1] %>% summary()
 
 # Counterfactual mean #
 #mu_10 <- mean(w_rmpw * Y * G)
@@ -158,8 +157,9 @@ df_reduction <- bind_rows(
 disp_reduction <- lm(Y ~ D, data = df_reduction, weights = ifelse(D == 0, w_rmpw, 1))$coef[2]
 disp_reduction
 mu1 - mu_10
-mu1/mu_10
 
+mu1/mu0
+mu1/mu_10
 mu_10/mu0
 
 # Lam <- 1.12 # critical for residual disparity
@@ -184,7 +184,12 @@ bootci
 bounds <- decompsens::getBiasBounds(G, Z, XA, XN, Y, Lambda = Lam)
 str(bounds)
 
-strongest_cov_df
+amplification <- decompsens::informalAmplify(G, Z, XA, XN, Y, Lambda = Lam)
+
+strongest_cov_df <- amplification[[1]]
+max_imbal_stnd <- amplification$max_imbal_stnd
+max_betau_01 <- amplification$max_beta
+str(amplification)
 
 ####################################################
 # Standardize observed covariates for control units
@@ -195,13 +200,15 @@ strongest_cov_df
 # Plot
 #######
 
+maxbias <- max(abs(bounds[[1]]))
+
 # function to compute beta_u from imbalance for plot
 betauFun <- function(x) {
   maxbias/x
 }
 
 
-num_cov <- 4
+num_cov <- 5
 
 x_orig = strongest_cov_df[1:num_cov,]$imbal_wt
 y_orig = strongest_cov_df[1:num_cov,]$coeff
@@ -217,15 +224,6 @@ X_cvx <- df_plot[hpts,]
 mycurve1 <- as.data.frame(curve(betauFun, from=0.05, to=4)) # computes beta_u from imbalance
 
 num_label <- 2
-
-andy_ggplot_theme <- function(bs = 12) {
-  theme_minimal(base_size = bs) + 
-    # theme(plot.title = element_text(hjust = 0.5, face = "bold"), 
-    #       legend.title = element_blank(), legend.position = "none") + 
-    theme(plot.title = element_text(hjust = 0.5, face = "bold"))
-}
-
-
 
 # Attempting to do this Melody-style
 
@@ -250,22 +248,38 @@ p1 <- df_plot %>%
   metR::geom_text_contour(aes(z = bias), 
                           breaks = bins, 
                           stroke = 0.2, skip = 0) + 
-  metR::geom_contour_fill(breaks = c(maxbias, 1000 * maxbias), fill='blue', alpha = 0.2) +
+  metR::geom_contour_fill(breaks = c(maxbias, 1000 * maxbias), fill='powderblue', alpha = 0.5) +
   geom_contour(breaks = c(maxbias), col='blue', size=1) 
 
 p1
 
 p1_full <- p1 + geom_point(data = strongest_cov_df[1:num_cov,], 
-             aes(x = imbal, y = coeff, z = 0)) + 
-  ggrepel::geom_label_repel(data = strongest_cov_df[1:num_cov,], 
-                            aes(x = imbal, y = coeff, z = 0, label = covar),
-                            nudge_y = 0.05, nudge_x = 0.5, label.padding = 0.1,
-                            point.padding = 0.1)
+             aes(x = imbal, y = coeff, z = 0), size = 3.3, color = "red") + 
+  geom_point(data = strongest_cov_df[1:num_cov,], 
+             aes(x = imbal_wt, y = coeff, z = 0), size = 3.3, color = "forestgreen") + 
+  scale_x_continuous(name = TeX("absolute standardized imbalance in $\\U$"), limits = c(0, max(max_imbal_stnd, 1))) +
+  scale_y_continuous(name = TeX("absolute $\\beta_u$"), limits = c(0, max(max_betau_01, betauFun(0.03))))
+
+# teal: #00BFC4
+# reddish: #F8766D
+
 p1_full
 
+num_cov_lbl <- 2
+
 p1_full + 
-  scale_x_continuous(name = "absolute standardized imbalance in U", limits = c(0, max(max_imbal_stnd, 1))) +
-  scale_y_continuous(name = TeX("absolute $\\beta_u$"), limits = c(0, max(max_betau_01, betauFun(0.03))))
+  ggrepel::geom_label_repel(data = strongest_cov_df[1:num_cov_lbl,], 
+                          aes(x = imbal, y = coeff, z = 0, label = covar),
+                          nudge_y = 0.05, nudge_x = 0.5, label.padding = 0.1,
+                           point.padding = 0.1) + 
+  ggrepel::geom_label_repel(data = strongest_cov_df[1:num_cov_lbl,],
+                            aes(x = imbal_wt, y = coeff, z = 0, label = covar),
+                            nudge_y = 0.05, nudge_x = 0.5, label.padding = 0.1,
+                            point.padding = 0.1) +
+  scale_x_continuous(name = "absolute standardized imbalance in U", limits = c(0, max(max_imbal_stnd, 1.01))) +
+  scale_y_continuous(name = TeX("absolute $\\beta_u$"), limits = c(0, max(max_betau_01, betauFun(0.08))))
+
+## Dan's plot: do not run - will throw error ##
 
 ggplot() +
   #geom_line(data = mycurve1, aes(x = x, y = y), color = "black", linewidth = 0.7) + # plots calibration curve
