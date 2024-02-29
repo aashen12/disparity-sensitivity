@@ -48,13 +48,15 @@ G <- df$sex_minority
 mu1 <- mean(Y[G == 1])
 mu0 <- mean(Y[G == 0])
 
+
+
 obs_disp <- mu1 - mu0
 obs_disp
 
 sd_obs_disp <- sqrt(var(Y[G == 1]) / sum(G == 1) + var(Y[G == 0]) / sum(G == 0))
 
 # construct 95% CI for obs_disp
-ci <- c(obs_disp - 1.96 * sd_obs_disp, obs_disp + 1.96 * sd_obs_disp)
+ci <- c(obs_disp - qnorm(0.95) * sd_obs_disp, obs_disp + qnorm(0.95) * sd_obs_disp)
 ci
 
 

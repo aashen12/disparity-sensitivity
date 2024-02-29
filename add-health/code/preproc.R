@@ -134,9 +134,19 @@ HT <- function(x, w, na.rm = TRUE) {
 df_yz %>% 
   group_by(sex_minority) %>%
   summarise(mean_attempt = Hajek(attempt, w = GSWGT1, na.rm = TRUE),
-            mean_ideation = Hajek(ideation, w = GSWGT1, na.rm = TRUE),
-            sd_ideation = sd(ideation, na.rm = TRUE),
-            n = n())
+            mean_ideation_weight = Hajek(ideation, w = GSWGT1, na.rm = TRUE),
+            mean_ideation = mean(ideation, na.rm = TRUE),
+            n = n()) %>% mutate(tau = diff(mean_ideation))
+
+sd_idea <- with(
+  df_yz,
+  sqrt(var(ideation[sex_minority == 1], na.rm = TRUE) / sum(sex_minority == 1) + 
+         var(ideation[sex_minority == 0], na.rm = TRUE) / sum(sex_minority == 0))
+)
+
+sd_idea
+
+c(0.0837 - qnorm(0.95) * sd_idea, 0.0837 + qnorm(0.95) * sd_idea)
 
 df_yz %>% 
   group_by(sex_minority) %>%
