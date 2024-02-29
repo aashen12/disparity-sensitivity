@@ -135,6 +135,7 @@ df_yz %>%
   group_by(sex_minority) %>%
   summarise(mean_attempt = Hajek(attempt, w = GSWGT1, na.rm = TRUE),
             mean_ideation = Hajek(ideation, w = GSWGT1, na.rm = TRUE),
+            sd_ideation = sd(ideation, na.rm = TRUE),
             n = n())
 
 df_yz %>% 
