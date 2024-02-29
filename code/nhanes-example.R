@@ -90,27 +90,34 @@ df_cleaned %>% pull(!!sym(treatment)) %>% table()
 names(df_cleaned)
 
 allowable_covs <- c("Age", "Gender", "BMI")
-non_allowable_covs <- c("Education", "HHIncome", "MaritalStatus", "Poverty")
+non_allowable_covs <- c("Education", "MaritalStatus", "Poverty")
 
 df_analysis <- df_cleaned %>% 
-  filter(!!sym(group) %in% c("Other", "Latinx")) %>% 
+  filter(!!sym(group) %in% c("White", "Latinx")) %>% 
   mutate(Race1 = case_when(
     !!sym(group) == "Latinx" ~ 1,
-    !!sym(group) == "Other" ~ 0
+    !!sym(group) == "White" ~ 0
   )) %>% 
   dplyr::select(all_of(c(group, outcome, treatment, allowable_covs, non_allowable_covs))) %>% 
-  drop_na()
+  mutate_at("Education",
+            ~case_when(
+              .x == "8th Grade" ~ 1,
+              .x == "9 - 11th Grade" ~ 2,
+              .x == "High School" ~ 3,
+              .x == "Some College" ~ 4,
+              .x == "College Grad" ~ 5
+            )) %>% drop_na()
 
 
-XA <- model.matrix(~ ., data = df_analysis %>% dplyr::select(all_of(allowable_covs)))
-XN <- model.matrix(~ ., data = df_analysis %>% dplyr::select(all_of(non_allowable_covs)))
-X <- cbind(XA, XN[, -1])
+XA <- model.matrix(~ . -1, data = df_analysis %>% dplyr::select(all_of(allowable_covs)))
+XN <- model.matrix(~ . -1, data = df_analysis %>% dplyr::select(all_of(non_allowable_covs)))
+X <- cbind(XA, XN)
 
 Z <- df_analysis %>% dplyr::pull(treatment)
 Y <- df_analysis %>% dplyr::pull(outcome)
 G <- df_analysis %>% dplyr::pull(group)
 
-w_rmpw = decompsens::estimateRMPW(G = G, Z = Z, Y = Y, XA = XA, XN = XN, trim = 0.05, allowable = FALSE)
+w_rmpw = decompsens::estimateRMPW(G = G, Z = Z, Y = Y, XA = XA, XN = XN, trim = 0.1, allowable = FALSE)
 
 w_rmpw[G == 1] %>% summary()
 
@@ -143,8 +150,6 @@ disp_residual
 mu_10 - mu0
 
 
-
-
 #################################################################
 ##                     Disparity Reduction                     ##
 #################################################################
@@ -164,148 +169,155 @@ mu_10/mu0
 
 # Lam <- 1.12 # critical for residual disparity
 
-Lam <- 1.12
+
+
+lam_resid <- 1.16 # critical for residual disparity alpha = 0.1
 estimand <- "res"
 
+w_rmpw <- decompsens::estimateRMPW(G = G, Z = Z, Y = Y, XA = XA, XN = XN, trim = 0.1, allowable = FALSE)
 
 extrema <- getExtrema(G = G, Y = Y, 
-                      gamma = log(Lam), w = w_rmpw, estimand = estimand, stab = TRUE)
+                      gamma = log(lam_resid), w = w_rmpw, estimand = "po", stab = TRUE)
 extrema
 
-bootci <- decompsens::boostrapCI(G, Z, Y, XA, XN, gamma = log(Lam), 
-                                 alpha = 0.05, estimand = estimand,
-                                 parallel = TRUE, B = 1000, stab = TRUE, 
-                                 allow = FALSE, trim = 0.05)
+bootci <- decompsens::bootstrapCI(G, Z, Y, XA, XN, gamma = log(lam_resid), 
+                                 alpha = 0.1, estimand = estimand,
+                                 parallel = TRUE, B = 2000, stab = TRUE, 
+                                 allowable = FALSE, trim = 0.1)
 bootci
 
+Lam <- lam_resid
 
-### Amplification using Dan's Calibration ###
+bounds <- decompsens::getBiasBounds(G, Z, XA, XN, Y, Lambda = Lam, trim = 0.1)
 
-bounds <- decompsens::getBiasBounds(G, Z, XA, XN, Y, Lambda = Lam)
-str(bounds)
+trim = 0.1
+Lambda=Lam
+bounds <- decompsens::getBiasBounds(G, Z, XA, XN, Y, Lambda, 
+                                    trim = trim, allowable = F, stab = T)
+maxbias <- max(abs(bounds[[1]]))
+message("Max bias: ", maxbias)
 
-amplification <- decompsens::informalAmplify(G, Z, XA, XN, Y, Lambda = Lam)
+X_G1 <- X[G == 1, ]
+X_G1_stnd <- apply(X_G1, MARGIN = 2, FUN = function(x) {
+  scale(x)
+})
+mod_matrix_y <- data.frame(y = Y[G == 1], model.matrix(~. - 
+                                                         1, data = data.frame(X_G1_stnd)))
+coeffs <- lm(y ~ ., data = mod_matrix_y)$coef[-1]
+max_betau <- max(abs(coeffs), na.rm = TRUE)
+ZG1 <- Z[G == 1]
+imbal_stnd <- colMeans(X_G1_stnd[ZG1 == 1, ]) - colMeans(X_G1_stnd[ZG1 == 
+                                                                     0, ])
+max_imbal_stnd <- max(abs(imbal_stnd), na.rm = TRUE)
+w <- bounds[[3]]
+wg1 <- w[G == 1]
+X_G1_w_stnd <- apply(X_G1, MARGIN = 2, FUN = function(x) {
+  x * wg1/sum(wg1)
+})
+imbal_stnd_weight <- colMeans(X_G1_w_stnd[ZG1 == 1, ]) - 
+  colMeans(X_G1_w_stnd[ZG1 == 0, ])
+max_imbal_stnd_wt <- max(abs(imbal_stnd_weight), na.rm = TRUE)
+coeff_df <- data.frame(covar = gsub("X_stnd[G == 1, ]", "", 
+                                    names(coeffs)), coeff = abs(as.numeric(coeffs)))
+imbal_df <- data.frame(covar = names(imbal_stnd), imbal = abs(as.numeric(imbal_stnd)), 
+                       imbal_wt = abs(as.numeric(imbal_stnd_weight)))
+strongest_cov_df <- dplyr::inner_join(coeff_df, imbal_df, 
+                                      by = "covar") %>% dplyr::arrange(desc(coeff * imbal))
 
-strongest_cov_df <- amplification[[1]]
+
+amplification <- decompsens::informalAmplify(G, Z, XA, XN, Y, Lambda = Lam, trim = 0.1)
+
+strongest_cov_df <- amplification[[1]] %>% drop_na()
 max_imbal_stnd <- amplification$max_imbal_stnd
 max_betau_01 <- amplification$max_beta
 str(amplification)
 
-####################################################
-# Standardize observed covariates for control units
-####################################################
-
-
-#######
-# Plot
-#######
-
 maxbias <- max(abs(bounds[[1]]))
 
-# function to compute beta_u from imbalance for plot
-betauFun <- function(x) {
-  maxbias/x
+max_betau_01 <- max(strongest_cov_df$coeff)
+max_imbal <- max(strongest_cov_df$imbal)
+
+
+round_down <- function(a) {
+  floor(a * 100) / 100
 }
 
-
-num_cov <- 5
-
-x_orig = strongest_cov_df[1:num_cov,]$imbal_wt
-y_orig = strongest_cov_df[1:num_cov,]$coeff
-
-x <- c(x_orig,0, 0, max(x_orig))
-y <- c(y_orig,0, max(y_orig),0)
-df_plot <- matrix(c(x,y), ncol = 2)
-
-hpts <- chull(df_plot)
-hpts <- c(hpts, hpts[1])
-
-X_cvx <- df_plot[hpts,]
-mycurve1 <- as.data.frame(curve(betauFun, from=0.05, to=4)) # computes beta_u from imbalance
-
-num_label <- 2
-
-# Attempting to do this Melody-style
-
-beta <- seq(0.05, 5.5, by = 0.01)
-imbalance <- seq(0.001, 1, by = 0.005)
+beta <- seq(max(0, min(strongest_cov_df$coeff) - 0.2), max(strongest_cov_df$coeff) + 0.22, by = 0.005)
+imbalance <- seq(0.001, max(strongest_cov_df$imbal) + 0.1, by = 0.005)
 data.fit <- expand.grid(beta, imbalance)
+
+
 names(data.fit) <- c("beta", "imbalance")
 
 df_plot <- data.fit %>% 
-  mutate(bias = beta * imbalance)
+  mutate(bias = abs(beta * imbalance))
 
+summary(df_plot$bias)
+maxbias
 
-bins <- c(0.4, 0.8, 1.6)
-text_bins <- bins[bins %% 1 == 0]
+bins <- seq(max(df_plot$bias) - 1.6 * sd(df_plot$bias),  max(df_plot$bias) + 1 * sd(df_plot$bias), length.out = 4) %>% 
+  round_down()
 
-num_cov <- 5
+num_cov <- 8 # specify 2x what you want
+psize <- 6.5
 
 p1 <- df_plot %>%
   ggplot(aes(x = imbalance, y = beta, z = bias)) +
   theme_bw() + 
   geom_contour(col="gray55", breaks = bins) + 
   metR::geom_text_contour(aes(z = bias), 
-                          breaks = bins, 
-                          stroke = 0.2, skip = 0) + 
+                          stroke = 0.2, skip = 0, breaks = bins) + 
   metR::geom_contour_fill(breaks = c(maxbias, 1000 * maxbias), fill='powderblue', alpha = 0.5) +
-  geom_contour(breaks = c(maxbias), col='blue', size=1) 
+  geom_contour(breaks = c(maxbias), col='blue', linewidth = 1) + 
+  metR::geom_text_contour(aes(z = maxbias), stroke = 0.2) + 
+  geom_point(x = 0.3, y = maxbias / 0.3, size = psize - 0.2, color = "black") +
+  geom_text(x = 0.3 + 0.033 , y = maxbias / 0.3 + 0.01, 
+            label = paste0("Bias: ", round(maxbias, 3)), size = psize, color = "black")
+
+# geom_contour(data = data.frame(x = seq(0.01, 0.25, by = 0.01), y = seq(0.01, 2, by = 0.01)) %>% 
+#                mutate(z = x * y),
+#              aes(x = x, y = y, z = z), breaks = c(maxbias), col='blue', linewidth = 1, inherit.aes = F) +
 
 p1
 
-p1_full <- p1 + geom_point(data = strongest_cov_df[1:num_cov,], 
-             aes(x = imbal, y = coeff, z = 0), size = 3.3, color = "red") + 
-  geom_point(data = strongest_cov_df[1:num_cov,], 
-             aes(x = imbal_wt, y = coeff, z = 0), size = 3.3, color = "forestgreen") + 
-  scale_x_continuous(name = TeX("absolute standardized imbalance in $\\U$"), limits = c(0, max(max_imbal_stnd, 1))) +
-  scale_y_continuous(name = TeX("absolute $\\beta_u$"), limits = c(0, max(max_betau_01, betauFun(0.03))))
+strongest_cov_df_long <- strongest_cov_df %>% 
+  pivot_longer(cols = c("imbal", "imbal_wt"), names_to = "imbal_type", values_to = "imbal_val") 
+
+
+p1_full <- p1 + geom_point(data = strongest_cov_df_long[1:num_cov,], 
+                           aes(x = imbal_val, y = coeff, z = 0, color = imbal_type), size = psize) + 
+  scale_color_manual(labels = c("imbal" = "Pre-wt", "imbal_wt" = "Post-wt"),
+                     values = c("imbal" = "red", "imbal_wt" = "forestgreen"))
 
 # teal: #00BFC4
 # reddish: #F8766D
 
 p1_full
 
-num_cov_lbl <- 2
+num_cov_lbl <- 3
 
-p1_full + 
+hull <- strongest_cov_df[1:(num_cov/2),] %>%
+  slice(chull(coeff, imbal))
+
+p1_full_unscaled <- p1_full + 
   ggrepel::geom_label_repel(data = strongest_cov_df[1:num_cov_lbl,], 
-                          aes(x = imbal, y = coeff, z = 0, label = covar),
-                          nudge_y = 0.05, nudge_x = 0.5, label.padding = 0.1,
-                           point.padding = 0.1) + 
-  ggrepel::geom_label_repel(data = strongest_cov_df[1:num_cov_lbl,],
-                            aes(x = imbal_wt, y = coeff, z = 0, label = covar),
-                            nudge_y = 0.05, nudge_x = 0.5, label.padding = 0.1,
-                            point.padding = 0.1) +
-  scale_x_continuous(name = "absolute standardized imbalance in U", limits = c(0, max(max_imbal_stnd, 1.01))) +
-  scale_y_continuous(name = TeX("absolute $\\beta_u$"), limits = c(0, max(max_betau_01, betauFun(0.08))))
+                            aes(x = imbal, y = coeff, z = 0, label = covar),
+                            nudge_y = -0.005, nudge_x = 0.005, label.padding = 0.1,
+                            point.padding = 0.1) + 
+  # ggrepel::geom_label_repel(data = strongest_cov_df[1:num_cov_lbl,],
+  #                           aes(x = imbal_wt, y = coeff, z = 0, label = covar),
+  #                           nudge_y = 0.005, nudge_x = 0.005, label.padding = 0.1,
+  #                           point.padding = 0.1) + 
+  geom_polygon(data = hull, aes(x = imbal, y = coeff, z = 0), alpha = 0.3, fill = "red") + 
+  theme_bw(base_size = 20) + 
+  theme(plot.title = element_text(hjust = 0.5, face = "bold")) + 
+  labs(x = TeX("absolute standardized imbalance in $\\U$"), y = TeX("absolute $\\beta_u$"),
+       title = "Disp. Residual (NHANES)", color = c("Imbalance")) + 
+  theme(legend.position = "bottom")
 
-## Dan's plot: do not run - will throw error ##
+# TODO: change font size
 
-ggplot() +
-  #geom_line(data = mycurve1, aes(x = x, y = y), color = "black", linewidth = 0.7) + # plots calibration curve
-  stat_function(fun = betauFun, aes(), linewidth = 0.7) +
-  geom_point(data = strongest_cov_df[1:num_cov,], 
-             aes(x = imbal, y = coeff, colour = "unweighted observed covs")) + # plot unweighted imbalance points
-  geom_point(data = strongest_cov_df[1:num_cov,], 
-             aes(x = imbal_wt, y = coeff, colour = "weighted observed covs")) + # plot weighted imbalance points
-  geom_hline(aes(yintercept=max(strongest_cov_df[1:num_cov,"coeff"]), colour = "unweighted observed covs"),
-             linetype="dashed", alpha = 0.8) + # horizontal line at max beta_u
-  geom_vline(aes(xintercept=max(strongest_cov_df[1:num_cov,"imbal"]), colour = "unweighted observed covs"),
-             linetype="dashed", alpha = 0.8) + # vertical line at max imbalance
-  geom_path(aes(x = X_cvx[,1], y = X_cvx[,2], colour ="weighted observed covs"), 
-            alpha = 0.5) + 
-  geom_polygon(aes(x = X_cvx[,1], y = X_cvx[,2]), 
-               fill = "red", alpha = 0.2) +
-  geom_text(data=strongest_cov_df[1:num_label,], 
-            aes(x = imbal, y = coeff, colour = "unweighted observed covs",label=covar),
-            size = 3, hjust = 0.1, vjust = 2.2) +
-  #annotate("rect", xmin = 0, xmax = max(strongest_cov_df[1:num_cov,]$imbal_wt), 
-  #          ymin = 0, ymax = max(strongest_cov_df[1:num_cov,]$coeff), alpha = .3) +
-  scale_x_continuous(name = "absolute standardized imbalance in U", limits = c(0, max(max_imbal_stnd,3))) +
-  scale_y_continuous(name = TeX("absolute $\\beta_u$"), limits = c(0, max(max_betau_01, betauFun(0.21)))) +
-  #ggtitle(TeX(paste0("$\\beta_u$ vs. imbalance for  $\\Lambda$ = ", Lambda,", ", in_data, " data"))) +
-  scale_color_manual(values = c("black","#00BFC4" , "#F8766D"), 
-                      breaks = c("error", "unweighted observed covs", "weighted observed covs")) + 
-  theme_bw() +
-  theme(legend.title = element_blank(), legend.position = "none",
-        axis.title.x = element_text(size = 10))
+p1_full_unscaled
+
+
+
