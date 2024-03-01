@@ -84,6 +84,35 @@ residual <- mu10 - mu0
 residual
 mu10/mu0
 
+## Bootstrap standard errors
+B <- 2000
+resid_boot <- numeric(B)
+out <- parallel::mclapply(1:B, function(i) {
+  ind <- sample(1:length(Y), length(Y), replace = TRUE)
+  w_boot <- decompsens::estimateRMPW(G=G[ind], Z=Z[ind], Y=Y[ind], XA=XA[ind,], XN=XN[ind,], trim = trim, allowable = allow)
+  mu10_boot <- sum(Y[ind][G[ind] == 1] * w_boot[G[ind] == 1]) / sum(w_boot[G[ind] == 1])
+  mu1_boot <- mean(Y[ind][G[ind] == 1])
+  mu0_boot <- mean(Y[ind][G[ind] == 0])
+  resid_boot <- mu10_boot - mu0_boot
+  red_boot <- mu1_boot - mu10_boot
+  list(resid_boot = resid_boot, red_boot = red_boot)
+})
+
+out_resid <- unlist(lapply(out, function(x) x[["resid_boot"]]))
+out_red <- unlist(lapply(out, function(x) x[["red_boot"]]))
+
+se_resid <- sqrt((1 / (B-1)) * sum((out_resid - mean(out_resid))^2))
+se_resid
+# 90% CI
+ci_resid <- c(residual - qnorm(0.95) * se_resid, residual + qnorm(0.95) * se_resid)
+ci_resid
+
+se_red <- sqrt((1 / (B-1)) * sum((out_red - mean(out_red))^2))
+se_red
+# 90% CI
+ci_red <- c(reduction - qnorm(0.8) * se_red, reduction + qnorm(0.8) * se_red)
+ci_red
+
 
 ###########################################################################################
 ###########################################################################################
