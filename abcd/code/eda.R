@@ -54,4 +54,10 @@ df1 %>% filter(sib_num == 0)
 # _peer victimization
 # _racial/ethnic discrimination
 
-
+X_list2 <- c("family_conflict" = "fes_y_ss_fc_mean", 
+             "parental_monitoring" = "fes_y_ss_pm_mean", 
+             "weekend_screen_time" = "srpf_y_ss_wst_mean", 
+             "school_environment" = "srpf_y_ss_ses_mean", 
+             "negative_life_events" = "fes_y_ss_nle_mean", 
+             "cyberbullying" = "bully_cyb_mean", 
+             "peer_victimization" = "bully_vic_mean")
