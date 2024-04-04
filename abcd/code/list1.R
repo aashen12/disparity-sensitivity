@@ -1,0 +1,479 @@
+# Analysis of list 1
+
+library(tidyverse)
+library(decompsens)
+library(parallel)
+library(doParallel)
+library(boot)
+
+set.seed(122357)
+
+numCores <- parallel::detectCores()
+
+doParallel::registerDoParallel(numCores)
+
+df_x <- read_csv("../data/list1_X.csv")
+
+# Allowable covariates 
+options(na.action='na.pass')
+
+
+#mediators <- c("peer_victimization")
+mediators <- c("")
+allowable_covs <- c("age", "sex", "sib_num", "sib_order")
+#allowable_covs <- c("age", "sex", "sib_num", "sib_order", "income", "adi")
+non_allowable_covs <- setdiff(names(df_x)[!names(df_x) %in% mediators], allowable_covs)
+
+XA <- model.matrix(~ .^2 -1, data = df_x %>% select(all_of(allowable_covs)))
+XN <- model.matrix(~ .^2 -1, data = df_x %>% select(all_of(non_allowable_covs)))
+
+
+dim(XA); dim(XN)
+
+# Non-allowable covariates
+
+
+df_yz <- read_csv("../data/list1_YZG.csv")
+
+G <- df_yz$sex_min
+Z <- df_yz$parent_accept
+Y <- df_yz$ideation
+
+mu1 <- mean(Y[G == 1])
+mu0 <- mean(Y[G == 0])
+
+mean(Z[G == 1]) - mean(Z[G == 0])
+
+
+obs_disp <- mu1 - mu0
+obs_disp
+
+sd_obs_disp <- sqrt(var(Y[G == 1]) / sum(G == 1) + var(Y[G == 0]) / sum(G == 0))
+
+# construct 95% CI for obs_disp
+ci <- c(obs_disp - qnorm(0.975) * sd_obs_disp, obs_disp + qnorm(0.975) * sd_obs_disp)
+ci
+
+
+allow <- TRUE
+trim <- 0
+
+w <- decompsens::estimateRMPW(G=G, Z=Z, Y=Y, XA=XA, XN=XN, trim = trim, allowable = allow)
+summary(w)
+
+mu10 <- weighted.mean(Y[G == 1], w[G == 1])
+
+mu1
+mu10
+mu0
+
+
+
+obs_disp
+
+reduction <- mu1 - mu10
+reduction
+mu1/mu10
+
+residual <- mu10 - mu0
+residual
+mu10/mu0
+
+
+## Bootstrap standard errors
+B <- 1000
+resid_boot <- numeric(B)
+# out <- parallel::mclapply(1:B, function(i) {
+#   ind <- sample(1:length(Y), length(Y), replace = TRUE)
+#   w_boot <- decompsens::estimateRMPW(G=G[ind], Z=Z[ind], Y=Y[ind], XA=XA[ind,], XN=XN[ind,], 
+#                                      trim = trim, allowable = allow)
+#   mu10_boot <- sum(Y[ind][G[ind] == 1] * w_boot[G[ind] == 1]) / sum(w_boot[G[ind] == 1])
+#   mu1_boot <- mean(Y[ind][G[ind] == 1])
+#   mu0_boot <- mean(Y[ind][G[ind] == 0])
+#   resid_boot <- mu10_boot - mu0_boot
+#   red_boot <- mu1_boot - mu10_boot
+#   list(resid_boot = resid_boot, red_boot = red_boot)
+# }, mc.cores = parallel::detectCores())
+# 
+# out_resid <- unlist(lapply(out, function(x) x[["resid_boot"]]))
+# out_red <- unlist(lapply(out, function(x) x[["red_boot"]]))
+
+boot_resid <- boot(Y, function(Y, ind) {
+  w_boot <- decompsens::estimateRMPW(G=G[ind], Z=Z[ind], Y=Y[ind], XA=XA[ind,], XN=XN[ind,], 
+                                     trim = trim, allowable = allow)
+  mu10_boot <- sum(Y[ind][G[ind] == 1] * w_boot[G[ind] == 1]) / sum(w_boot[G[ind] == 1])
+  mu1_boot <- mean(Y[ind][G[ind] == 1])
+  mu0_boot <- mean(Y[ind][G[ind] == 0])
+  mu10_boot - mu0_boot
+}, R = 100)
+
+boot_red <- boot(Y, function(Y, ind) {
+  w_boot <- decompsens::estimateRMPW(G=G[ind], Z=Z[ind], Y=Y[ind], XA=XA[ind,], XN=XN[ind,], 
+                                     trim = trim, allowable = allow)
+  mu10_boot <- sum(Y[ind][G[ind] == 1] * w_boot[G[ind] == 1]) / sum(w_boot[G[ind] == 1])
+  mu1_boot <- mean(Y[ind][G[ind] == 1])
+  mu0_boot <- mean(Y[ind][G[ind] == 0])
+  mu1_boot - mu10_boot
+}, R = 100)
+
+boot_resid
+residual
+boot_resid$t0
+
+
+boot_red
+reduction
+boot_red$t0
+
+
+lam <- 5
+h <- log(lam)
+
+wh <- w * exp(h)
+
+mu10_h <- weighted.mean(Y[G == 1], wh[G == 1])
+mu10_h
+mu10
+
+mu0
+mu1
+
+###########################################################################################
+###########################################################################################
+###########################################################################################
+
+### Disparity REDUCTION ###
+
+estimand <- "red"
+
+residual
+reduction
+
+
+seq <- seq(1, 2, by = 0.01)
+
+out <- sapply(seq, function(i) {
+  decompsens::getExtrema(G=G, Y=Y, w=w, gamma = log(i), estimand = estimand, RD = TRUE, verbose = FALSE)
+}) %>% t() %>% data.frame() %>% mutate(lam = seq) %>% relocate(lam, .before = "X1")
+
+out %>% 
+  pivot_longer(cols = -lam, names_to = "extrema", values_to = "value") %>%
+  ggplot(aes(x = lam, y = value, color = log(lam))) +
+  geom_point(size = 1) + 
+  theme_minimal()
+
+# find out$X1 where the lower bound crosses 0
+
+# Assuming 'sequence' is your vector of numbers
+
+cross_ind <- min(max(which(out$X1 >= 0)), # last positive index
+                 min(which(out$X1 <= 0))) # first negative index
+
+lamstar <- out$lam[cross_ind]
+lamstar
+
+
+
+lam_red <- lamstar
+
+boot_ci <- decompsens::bootstrapCI(G=G, Z=Z, Y=Y, XA=XA, XN=XN, w=w, gamma = log(lam_red),
+                                   alpha=0.05, B=1000, estimand = estimand, stratify = FALSE,
+                                   parallel = TRUE, allowable = allow, RD = T)
+boot_ci
+
+
+
+# cis <- sapply(
+#   Lam_grid,
+#   function(lam) {
+#     decompsens::bootstrapCI(G=G, Z=Z, Y=Y, XA=XA, XN=XN, w=w, gamma = lam,
+#                             alpha=0.05, B=2000, estimand = estimand)
+#   }
+# )
+# 
+# if (ncol(cis) == length(Lam_grid)) {
+#   nlam <- length(Lam_grid)
+# } else {
+#   print("Error in bootstrapping")
+# }
+# 
+# cis <- cis %>% t()
+
+Lam <- lam_red
+
+bounds <- decompsens::getBiasBounds(G, Z, XA, XN, Y, Lambda = Lam)
+amplification <- decompsens::informalAmplify(G, Z, XA, XN, Y, Lambda = Lam)
+
+strongest_cov_df <- amplification[[1]] %>% drop_na()
+max_imbal_stnd <- amplification$max_imbal_stnd
+max_betau_01 <- amplification$max_beta
+str(amplification)
+
+maxbias <- max(abs(bounds[[1]]))
+
+max_betau_01 <- max(strongest_cov_df$coeff)
+max_imbal <- max(strongest_cov_df$imbal)
+
+beta <- seq(min(strongest_cov_df$coeff) - 0.2, max(strongest_cov_df$coeff) + 0.2, by = 0.01)
+imbalance <- seq(0.001, max(strongest_cov_df$imbal) + 0.2, by = 0.005)
+data.fit <- expand.grid(beta, imbalance)
+names(data.fit) <- c("beta", "imbalance")
+
+df_plot <- data.fit %>% 
+  mutate(bias = abs(beta * imbalance))
+
+summary(df_plot$bias)
+
+round_down <- function(a) {
+  floor(a * 100) / 100
+}
+
+
+summary(df_plot$imbalance)
+summary(df_plot$beta)
+
+maxbias
+
+bins <- seq(round(maxbias, 2) - 0.05, round(maxbias, 2) + 0.05, length.out = 4) %>% round(3)
+
+bins <- bins[bins > 0]
+
+num_cov <- 10 # specify 2x what you want
+psize <- 6
+
+p1 <- df_plot %>%
+  ggplot(aes(x = imbalance, y = beta, z = bias)) +
+  theme_bw() + 
+  geom_contour(col="gray55", breaks = bins) + 
+  metR::geom_text_contour(aes(z = bias), 
+                          breaks = bins,
+                          stroke = 0.2, skip = 0) + 
+  metR::geom_contour_fill(breaks = c(maxbias, 1000 * maxbias), fill='powderblue', alpha = 0.5) +
+  geom_contour(breaks = c(maxbias), col='blue', linewidth = 1) + 
+  metR::geom_text_contour(aes(z = maxbias), stroke = 0.2) + 
+  geom_point(x = 0.65, y = maxbias / 0.65, size = psize - 2, color = "black") +
+  geom_text(x = 0.65 + 0.02, y = maxbias / 0.65 + 0.009,
+            label = paste0("Bias: ", round(maxbias, 3)), size = 6, color = "black")
+
+# geom_contour(data = data.frame(x = seq(0.01, 0.25, by = 0.01), y = seq(0.01, 2, by = 0.01)) %>% 
+#                mutate(z = x * y),
+#              aes(x = x, y = y, z = z), breaks = c(maxbias), col='blue', linewidth = 1, inherit.aes = F) +
+
+p1
+
+strongest_cov_df_long <- strongest_cov_df %>% 
+  pivot_longer(cols = c("imbal", "imbal_wt"), names_to = "imbal_type", values_to = "imbal_val") 
+
+
+p1_full <- p1 + geom_point(data = strongest_cov_df_long[1:num_cov,], 
+                           aes(x = imbal_val, y = coeff, z = 0, color = imbal_type), size = psize) + 
+  scale_color_manual(labels = c("imbal" = "Pre-wt", "imbal_wt" = "Post-wt"),
+                     values = c("imbal" = "red", "imbal_wt" = "forestgreen"))
+
+# teal: #00BFC4
+# reddish: #F8766D
+
+p1_full
+
+
+
+num_cov_lbl <- 5
+
+hull <- strongest_cov_df[1:(num_cov/2),] %>%
+  slice(chull(coeff, imbal))
+
+
+with(strongest_cov_df, chull(coeff, imbal))
+
+library(latex2exp)
+
+p1_full_unscaled <- p1_full + 
+  ggrepel::geom_label_repel(data = strongest_cov_df[1:num_cov_lbl,], 
+                            aes(x = imbal, y = coeff, z = 0, label = covar),
+                            nudge_y = -0.005, nudge_x = 0.005, label.padding = 0.1,
+                            point.padding = 0.1) + 
+  # ggrepel::geom_label_repel(data = strongest_cov_df[1:num_cov_lbl,],
+  #                           aes(x = imbal_wt, y = coeff, z = 0, label = covar),
+  #                           nudge_y = 0.005, nudge_x = 0.005, label.padding = 0.1,
+  #                           point.padding = 0.1) + 
+  geom_polygon(data = hull, aes(x = imbal, y = coeff, z = 0), alpha = 0.3, fill = "red") + 
+  theme_bw(base_size = 20) + 
+  theme(plot.title = element_text(hjust = 0.5, face = "bold")) + 
+  labs(x = TeX("absolute standardized imbalance in $\\U$"), y = TeX("absolute $\\beta_u$"),
+       title = "Disp. REDUCTION (ABCD)", color = c("Imbalance")) + 
+  theme(legend.position = "bottom")
+
+# TODO: change font size
+
+p1_full_unscaled
+
+
+###########################################################################################
+###########################################################################################
+###########################################################################################
+
+### Disparity Residual ###
+
+estimand <- "res"
+
+residual
+reduction
+
+
+seq <- seq(1, 2, by = 0.01)
+
+out <- sapply(seq, function(i) {
+  decompsens::getExtrema(G=G, Y=Y, w=w, gamma = log(i), estimand = estimand, RD = TRUE, verbose = FALSE)
+}) %>% t() %>% data.frame() %>% mutate(lam = seq) %>% relocate(lam, .before = "X1")
+
+out %>% 
+  pivot_longer(cols = -lam, names_to = "extrema", values_to = "value") %>%
+  ggplot(aes(x = lam, y = value, color = log(lam))) +
+  geom_point(size = 1) + 
+  theme_minimal()
+
+# find out$X1 where the lower bound crosses 0
+
+# Assuming 'sequence' is your vector of numbers
+
+cross_ind <- min(max(which(out$X1 >= 0)), # last positive index
+    min(which(out$X1 <= 0))) # first negative index
+
+lamstar <- out$lam[cross_ind]
+
+
+
+
+lam_resid <- lamstar
+
+boot_ci <- decompsens::bootstrapCI(G=G, Z=Z, Y=Y, XA=XA, XN=XN, w=w, gamma = log(lam_resid),
+                                   alpha=0.05, B=1000, estimand = estimand, stratify = FALSE,
+                                   parallel = TRUE, allowable = allow, RD = T)
+boot_ci
+
+
+
+# cis <- sapply(
+#   Lam_grid,
+#   function(lam) {
+#     decompsens::bootstrapCI(G=G, Z=Z, Y=Y, XA=XA, XN=XN, w=w, gamma = lam,
+#                             alpha=0.05, B=2000, estimand = estimand)
+#   }
+# )
+# 
+# if (ncol(cis) == length(Lam_grid)) {
+#   nlam <- length(Lam_grid)
+# } else {
+#   print("Error in bootstrapping")
+# }
+# 
+# cis <- cis %>% t()
+
+Lam <- lam_resid
+
+bounds <- decompsens::getBiasBounds(G, Z, XA, XN, Y, Lambda = Lam)
+amplification <- decompsens::informalAmplify(G, Z, XA, XN, Y, Lambda = Lam)
+
+strongest_cov_df <- amplification[[1]] %>% drop_na()
+max_imbal_stnd <- amplification$max_imbal_stnd
+max_betau_01 <- amplification$max_beta
+str(amplification)
+
+maxbias <- max(abs(bounds[[1]]))
+
+max_betau_01 <- max(strongest_cov_df$coeff)
+max_imbal <- max(strongest_cov_df$imbal)
+
+beta <- seq(min(strongest_cov_df$coeff) - 0.2, max(strongest_cov_df$coeff) + 0.2, by = 0.01)
+imbalance <- seq(0.001, max(strongest_cov_df$imbal) + 0.2, by = 0.005)
+data.fit <- expand.grid(beta, imbalance)
+names(data.fit) <- c("beta", "imbalance")
+
+df_plot <- data.fit %>% 
+  mutate(bias = abs(beta * imbalance))
+
+summary(df_plot$bias)
+
+round_down <- function(a) {
+  floor(a * 100) / 100
+}
+
+
+summary(df_plot$imbalance)
+summary(df_plot$beta)
+
+maxbias
+
+bins <- seq(round(maxbias, 2) - 0.05, round(maxbias, 2) + 0.05, length.out = 4) %>% round(3)
+
+num_cov <- 10 # specify 2x what you want
+psize <- 6
+
+p1 <- df_plot %>%
+  ggplot(aes(x = imbalance, y = beta, z = bias)) +
+  theme_bw() + 
+  geom_contour(col="gray55", breaks = bins) + 
+  metR::geom_text_contour(aes(z = bias), 
+                          breaks = bins,
+                          stroke = 0.2, skip = 0) + 
+  metR::geom_contour_fill(breaks = c(maxbias, 1000 * maxbias), fill='powderblue', alpha = 0.5) +
+  geom_contour(breaks = c(maxbias), col='blue', linewidth = 1) + 
+  metR::geom_text_contour(aes(z = maxbias), stroke = 0.2) + 
+  geom_point(x = 0.65, y = maxbias / 0.65, size = psize - 2, color = "black") +
+  geom_text(x = 0.65 + 0.02, y = maxbias / 0.65 + 0.009,
+            label = paste0("Bias: ", round(maxbias, 3)), size = 6, color = "black")
+
+# geom_contour(data = data.frame(x = seq(0.01, 0.25, by = 0.01), y = seq(0.01, 2, by = 0.01)) %>% 
+#                mutate(z = x * y),
+#              aes(x = x, y = y, z = z), breaks = c(maxbias), col='blue', linewidth = 1, inherit.aes = F) +
+
+p1
+
+strongest_cov_df_long <- strongest_cov_df %>% 
+  pivot_longer(cols = c("imbal", "imbal_wt"), names_to = "imbal_type", values_to = "imbal_val") 
+
+
+p1_full <- p1 + geom_point(data = strongest_cov_df_long[1:num_cov,], 
+                           aes(x = imbal_val, y = coeff, z = 0, color = imbal_type), size = psize) + 
+  scale_color_manual(labels = c("imbal" = "Pre-wt", "imbal_wt" = "Post-wt"),
+                     values = c("imbal" = "red", "imbal_wt" = "forestgreen"))
+
+# teal: #00BFC4
+# reddish: #F8766D
+
+p1_full
+
+  
+
+num_cov_lbl <- 5
+
+hull <- strongest_cov_df[1:(num_cov/2),] %>%
+  slice(chull(coeff, imbal))
+
+
+with(strongest_cov_df, chull(coeff, imbal))
+
+library(latex2exp)
+
+p1_full_unscaled <- p1_full + 
+  ggrepel::geom_label_repel(data = strongest_cov_df[1:num_cov_lbl,], 
+                            aes(x = imbal, y = coeff, z = 0, label = covar),
+                            nudge_y = -0.005, nudge_x = 0.005, label.padding = 0.1,
+                            point.padding = 0.1) + 
+  # ggrepel::geom_label_repel(data = strongest_cov_df[1:num_cov_lbl,],
+  #                           aes(x = imbal_wt, y = coeff, z = 0, label = covar),
+  #                           nudge_y = 0.005, nudge_x = 0.005, label.padding = 0.1,
+  #                           point.padding = 0.1) + 
+  geom_polygon(data = hull, aes(x = imbal, y = coeff, z = 0), alpha = 0.3, fill = "red") + 
+  theme_bw(base_size = 20) + 
+  theme(plot.title = element_text(hjust = 0.5, face = "bold")) + 
+  labs(x = TeX("absolute standardized imbalance in $\\U$"), y = TeX("absolute $\\beta_u$"),
+       title = "Disp. Residual (ABCD)", color = c("Imbalance")) + 
+  theme(legend.position = "bottom")
+
+# TODO: change font size
+
+p1_full_unscaled
+
+
+
