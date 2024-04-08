@@ -258,9 +258,8 @@ generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
     metR::geom_contour_fill(breaks = c(maxbias, 1000 * maxbias), fill='powderblue', alpha = 0.5) +
     geom_contour(breaks = c(maxbias), col='blue', linewidth = 1) + 
     metR::geom_text_contour(aes(z = maxbias), stroke = 0.2) + 
-    geom_point(x = 0.65, y = maxbias / 0.65, size = psize - 2, color = "black") +
-    geom_text(x = 0.65 + 0.02, y = maxbias / 0.65 + 0.009,
-              label = paste0("Bias: ", round(maxbias, 3)), size = 6, color = "black")
+    geom_point(x = 0.65, y = maxbias / 0.65, size = psize - 2, color = "black")
+    
   
   # geom_contour(data = data.frame(x = seq(0.01, 0.25, by = 0.01), y = seq(0.01, 2, by = 0.01)) %>% 
   #                mutate(z = x * y),
@@ -303,16 +302,19 @@ generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
     geom_hline(yintercept = 0, color = "gray55") + 
     geom_text(x = 0.55 - 0.1, y = 0.365,
               label = TeX(paste0("$\\Lambda^{*} = ", Lam)), 
-              size = 8, color = "black")
+              size = 8, color = "black") + 
+    geom_text(x = 0.55 - 0.1, y = 0.365 - 0.04,
+              label = paste0("Bias: ", round(maxbias, 3)), size = 8, color = "black")
   
   p1_full_unscaled
 }
 
-resid_plot <- generatePlot(num_cov_lbl = 8, psize = 5, estimand = "resid")
-red_plot <- generatePlot(num_cov_lbl = 8, psize = 5, estimand = "red")
+resid_plot <- generatePlot(num_cov_lbl = 10, psize = 5, estimand = "resid")
+red_plot <- generatePlot(num_cov_lbl = 10, psize = 5, estimand = "red")
 
 resid_plot
 ggsave("plots/resid_plot_add.png", resid_plot, width = 10, height = 10)
 
 red_plot
 ggsave("plots/red_plot_add.png", red_plot, width = 10, height = 10)
+
