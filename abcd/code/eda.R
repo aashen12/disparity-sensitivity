@@ -13,19 +13,22 @@ ldf <- read_csv("../data/data_SM.csv")
 
 parent <- raw_df$crpbi_y_ss_parent_mean
 caregiver <- raw_df$crpbi_y_ss_caregiver_mean
+sm <- raw_df$SM_inclusive_y_br_ever
 
 summary(parent)
 summary(caregiver)
 
 
-data.frame(parent, caregiver) %>% 
+data.frame(parent, caregiver, sm) %>% 
   filter(!is.na(parent) & !is.na(caregiver)) %>% 
   pivot_longer(cols = c(parent, caregiver), names_to = "role", values_to = "score") %>%
   ggplot(aes(x = score, fill = role)) +
   geom_density(color = "black", alpha = 0.5) +
   labs(x = "score", y = "density", title = "Density plot of parental and caregiver acceptance scores",
        fill = "Role") + 
+  facet_wrap(~sm) +
   theme_minimal() +
+  theme(legend.position = "bottom") + 
   theme(text = element_text(size = 20)) 
 
 
@@ -39,7 +42,7 @@ hist(parent + caregiver)
 #. Scores of 3 for parent (if no caregiver)
 #. Scores of 3 for both OR score of 3 for parent and at least 2 for caregiver
 
-good_parent_thresh <- 2.6667
+good_parent_thresh <- 8/3
 
 df_withz <- raw_df %>% 
   mutate(parent_accept = case_when(
@@ -64,7 +67,7 @@ Z_var <- c("parent_accept" = "parent_accept")
 
 
 Y_var <- c("ideation" = "SI_y_ever") # ideation
-# Y_var <- c("ideation" = "SA_y_ever") # attempt
+#Y_var <- c("ideation" = "SA_y_ever") # attempt
 
 G_var <- c("sex_min" = "SM_inclusive_y_br_ever")
 
@@ -152,13 +155,16 @@ table(Y)
 table(G)
 
 
+
 mean(Z[G == 1])
 mean(Z[G == 0])
+
+mean(Z[G == 0])-mean(Z[G == 1])
 
 mean(Y[G == 1])
 mean(Y[G == 0])
 
-
+mean(Y[G == 1])-mean(Y[G == 0])
 
 
 
