@@ -29,8 +29,6 @@ allowable_covs <- c("age", "sex", "sib_num", "sib_order")
 #allowable_covs <- c("age", "sex", "sib_num", "sib_order", "income", "adi")
 non_allowable_covs <- setdiff(names(df_x)[!names(df_x) %in% mediators], allowable_covs)
 
-
-
 df <- df_allowable <- model.matrix(~ . -1, data = df_x %>% select(all_of(allowable_covs))) %>% 
   data.frame() %>% NAImpute()
 XA <- create_model_matrix(df_allowable)

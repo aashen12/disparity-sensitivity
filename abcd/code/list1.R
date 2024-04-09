@@ -30,43 +30,60 @@ allowable_covs <- c("age", "sex", "sib_num", "sib_order")
 #allowable_covs <- c("age", "sex", "sib_num", "sib_order", "income", "adi")
 non_allowable_covs <- setdiff(names(df_x)[!names(df_x) %in% mediators], allowable_covs)
 
-NAImpute <- function(df) {
-  for(i in c(1:ncol(df))){
-    if(any(is.na(df[,i]))){
-      print(paste('Missing values found in column', i ,'of X; imputing and adding missingness indicators'))
-      df <- cbind(df, is.na(df[,i]))
-      colnames(df)[ncol(df)] <- paste(colnames(df)[i],'NA', sep = '')
-      df[which(is.na(df[,i])),i] <- mean(df[,i], na.rm = TRUE)    
-    }
-  }
-  df
+df <- df_allowable <- model.matrix(~ . -1, data = df_x %>% select(all_of(allowable_covs))) %>% 
+  data.frame() %>% NAImpute()
+XA_log <- create_model_matrix(df_allowable)
+
+df <- df_non_allowable <- model.matrix(~ . -1, data = df_x %>% select(all_of(non_allowable_covs))) %>% 
+  data.frame() %>% NAImpute()
+XN_log <- create_model_matrix(df_non_allowable)
+
+
+# XA <- model.matrix(~ .^2 -1, data = df_x %>% select(all_of(allowable_covs))) %>% 
+#   data.frame() %>%
+#   NAImpute()
+# XA <- XA[, !grepl(":.*NA$", colnames(XA))
+# XN <- model.matrix(~ .^2 -1, data = df_x %>% select(all_of(non_allowable_covs))) %>% NAImpute()
+# XN <- XN[, !grepl(":.*NA$", colnames(XN))]
+
+X_log <- cbind(XA_log, XN_log)
+
+# Non-allowable covariates
+
+
+df_yz <- read_csv("../data/list1_YZG.csv")
+
+G <- df_yz$sex_min
+Z <- df_yz$parent_accept
+
+df_yz %>% group_by(sex_min) %>% 
+  summarise(
+    n = n(),
+    mean_parent_accept = mean(parent_accept, na.rm = FALSE),
+    sd_parent_accept = sd(parent_accept, na.rm = FALSE)
+  )
+
+allowable <- TRUE
+trim <- 0.01
+
+if (allowable) {
+  e0 <- glm(Z ~ XA_log, family = binomial, weights = 1 - G, na.action = na.exclude)$fitted.values
+  e1 <- glm(Z ~ X_log, family = binomial, weights = G, na.action = na.exclude)$fitted.values
+} else {
+  e0 <- glm(Z ~ X_log, family = binomial, weights = 1 - G, na.action = na.exclude)$fitted.values
+  e1 <- glm(Z ~ X_log, family = binomial, weights = G, na.action = na.exclude)$fitted.values
 }
 
-NAImputeNoAdd <- function(df) {
-  for(i in c(1:ncol(df))){
-    if(any(is.na(df[,i]))){
-      print(paste('Missing values found in column', i ,'of X; imputing and adding missingness indicators'))
-      #df <- cbind(df, is.na(df[,i]))
-      #colnames(df)[ncol(df)] <- paste(colnames(df)[i],'NA', sep = '')
-      df[which(is.na(df[,i])),i] <- mean(df[,i], na.rm = TRUE)    
-    }
-  }
-  df
-}
+e0 <- pmax(pmin(e0, 1 - trim), trim)
+e1 <- pmax(pmin(e1, 1 - trim), trim)
 
-XA <- model.matrix(~ .^2 -1, data = df_x %>% select(all_of(allowable_covs))) %>% NAImpute()
-XA <- XA[, !grepl(":.*NA$", colnames(XA))]
+#wr <- glm(G ~ 1, family = binomial, na.action = na.exclude)$fitted.values / glm(G ~ XA[, "age"] + XA[, "sexF"] + XA[, "sexM"], family = binomial, na.action = na.exclude)$fitted.values
+wr <- 1
 
+w1 = e0 / e1 * wr
+w0 = (1 - e0) / (1 - e1) * wr
+w = w1 * Z + w0 * (1 - Z)
 
-XN <- model.matrix(~ .^2 -1, data = df_x %>% select(all_of(non_allowable_covs))) %>% NAImpute()
-XN <- XN[, !grepl(":.*NA$", colnames(XN))]
-
-X <- cbind(XA, XN)
-
-wg1 <- glm(G ~ 1, family = binomial, na.action = na.exclude)$fitted.values / glm(G ~ XA[, "age"] + XA[, "sexF"] + XA[, "sexM"], family = binomial, na.action = na.exclude)$fitted.values
-wg0 <- glm(1-G ~ 1, family = binomial, na.action = na.exclude)$fitted.values / glm(1-G ~ XA[, "age"] + XA[, "sexF"] + XA[, "sexM"], family = binomial, na.action = na.exclude)$fitted.values
-
-dim(XA); dim(XN)
 
 # Non-allowable covariates
 
@@ -83,18 +100,12 @@ obs_disp <- mu1 - mu0
 obs_disp
 mean(Y[G == 1]) - mean(Y[G == 0])
 
-sd_obs_disp <- sqrt(var(Y[G == 1]) / sum(G == 1) + var(Y[G == 0]) / sum(G == 0))
+# sd_obs_disp <- sqrt(var(Y[G == 1]) / sum(G == 1) + var(Y[G == 0]) / sum(G == 0))
+# 
+# # construct 95% CI for obs_disp
+# ci <- c(obs_disp - qnorm(0.975) * sd_obs_disp, obs_disp + qnorm(0.975) * sd_obs_disp)
+# ci
 
-# construct 95% CI for obs_disp
-ci <- c(obs_disp - qnorm(0.975) * sd_obs_disp, obs_disp + qnorm(0.975) * sd_obs_disp)
-ci
-
-
-allow <- TRUE
-trim <- 0
-
-w <- decompsens::estimateRMPW(G=G, Z=Z, Y=Y, XA=XA, XN=XN, trim = trim, allowable = allow)
-summary(w)
 
 mu10 <- weighted.mean(Y[G == 1], w[G == 1])
 
@@ -215,6 +226,10 @@ num_cov_lbl <- 8
 
 psize <- 6
 
+XA <- model.matrix(~ . -1, data = df_x %>% select(all_of(allowable_covs))) %>% NAImpute()
+XA <- XA[, !grepl(":.*NA$", colnames(XA))]
+XN <- model.matrix(~ .^2 -1, data = df_x %>% select(all_of(non_allowable_covs))) %>% NAImpute()
+XN <- XN[, !grepl(":.*NA$", colnames(XN))]
 
 generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
   
@@ -246,6 +261,8 @@ generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
                    min(which(out$X1 <= 0))) # first negative index
   
   Lam <- out$lam[cross_ind]
+  
+  print(paste0("Lambda: ", Lam))
   
   bounds <- decompsens::getBiasBounds(G, Z, XA, XN, Y, Lambda = Lam)
   amplification <- decompsens::informalAmplify(G, Z, XA, XN, Y, Lambda = Lam)
@@ -298,7 +315,7 @@ generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
                             stroke = 0.2, skip = 0) + 
     metR::geom_contour_fill(breaks = c(maxbias, 1000 * maxbias), fill='powderblue', alpha = 0.5) +
     geom_contour(breaks = c(maxbias), col='blue', linewidth = 1) + 
-    metR::geom_text_contour(aes(z = maxbias), stroke = 0.2) + 
+    metR::geom_text_contour(aes(z = maxbias), stroke = 0.2)
     #geom_point(x = 0.65, y = maxbias / 0.65, size = psize - 2, color = "black")
   
   # geom_contour(data = data.frame(x = seq(0.01, 0.25, by = 0.01), y = seq(0.01, 2, by = 0.01)) %>% 
@@ -311,7 +328,7 @@ generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
     pivot_longer(cols = c("imbal", "imbal_wt"), names_to = "imbal_type", values_to = "imbal_val") 
   
   num_cov <- min(nrow(strongest_cov_df), num_cov_lbl * 2)
-  p1_full <- p1 + geom_point(data = strongest_cov_df_long[1:num_cov,], 
+  p1_full <- p1 + geom_point(data = strongest_cov_df_long, 
                              aes(x = imbal_val, y = coeff, z = 0, color = imbal_type), size = psize) + 
     scale_color_manual(labels = c("imbal" = "Pre-wt", "imbal_wt" = "Post-wt"),
                        values = c("imbal" = "red", "imbal_wt" = "forestgreen"))
@@ -319,7 +336,7 @@ generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
   # teal: #00BFC4
   # reddish: #F8766D
   
-  hull <- strongest_cov_df[1:(num_cov/2),] %>%
+  hull <- strongest_cov_df %>%
     slice(chull(coeff, imbal))
   
   
@@ -349,8 +366,8 @@ generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
   p1_full_unscaled
 }
 
-resid_plot <- generatePlot(num_cov_lbl = 6, psize = 5, estimand = "resid")
-red_plot <- generatePlot(num_cov_lbl = 6, psize = 5, estimand = "red")
+resid_plot <- generatePlot(num_cov_lbl = 3, psize = 5, estimand = "resid")
+red_plot <- generatePlot(num_cov_lbl = 3, psize = 5, estimand = "red")
 
 resid_plot
 red_plot
