@@ -1,5 +1,4 @@
 # Analysis of list 1
-
 library(tidyverse)
 library(decompsens)
 library(parallel)
@@ -15,6 +14,11 @@ numCores <- parallel::detectCores()
 doParallel::registerDoParallel(numCores)
 
 df_x <- read_csv("../data/list1_X.csv")
+df_yz <- read_csv("../data/list1_YZG.csv")
+
+G <- df_yz$sex_min
+Z <- df_yz$parent_accept
+Y <- df_yz$ideation
 
 # Allowable covariates 
 options(na.action='na.pass')
@@ -26,20 +30,48 @@ allowable_covs <- c("age", "sex", "sib_num", "sib_order")
 #allowable_covs <- c("age", "sex", "sib_num", "sib_order", "income", "adi")
 non_allowable_covs <- setdiff(names(df_x)[!names(df_x) %in% mediators], allowable_covs)
 
-XA <- model.matrix(~ .^2 -1, data = df_x %>% select(all_of(allowable_covs)))
-XN <- model.matrix(~ .^2 -1, data = df_x %>% select(all_of(non_allowable_covs)))
+NAImpute <- function(df) {
+  for(i in c(1:ncol(df))){
+    if(any(is.na(df[,i]))){
+      print(paste('Missing values found in column', i ,'of X; imputing and adding missingness indicators'))
+      df <- cbind(df, is.na(df[,i]))
+      colnames(df)[ncol(df)] <- paste(colnames(df)[i],'NA', sep = '')
+      df[which(is.na(df[,i])),i] <- mean(df[,i], na.rm = TRUE)    
+    }
+  }
+  df
+}
 
+NAImputeNoAdd <- function(df) {
+  for(i in c(1:ncol(df))){
+    if(any(is.na(df[,i]))){
+      print(paste('Missing values found in column', i ,'of X; imputing and adding missingness indicators'))
+      #df <- cbind(df, is.na(df[,i]))
+      #colnames(df)[ncol(df)] <- paste(colnames(df)[i],'NA', sep = '')
+      df[which(is.na(df[,i])),i] <- mean(df[,i], na.rm = TRUE)    
+    }
+  }
+  df
+}
+
+XA <- model.matrix(~ .^2 -1, data = df_x %>% select(all_of(allowable_covs))) %>% NAImpute()
+XA <- XA[, !grepl(":.*NA$", colnames(XA))]
+
+
+XN <- model.matrix(~ .^2 -1, data = df_x %>% select(all_of(non_allowable_covs))) %>% NAImpute()
+XN <- XN[, !grepl(":.*NA$", colnames(XN))]
+
+X <- cbind(XA, XN)
+
+wg1 <- glm(G ~ 1, family = binomial, na.action = na.exclude)$fitted.values / glm(G ~ XA[, "age"] + XA[, "sexF"] + XA[, "sexM"], family = binomial, na.action = na.exclude)$fitted.values
+wg0 <- glm(1-G ~ 1, family = binomial, na.action = na.exclude)$fitted.values / glm(1-G ~ XA[, "age"] + XA[, "sexF"] + XA[, "sexM"], family = binomial, na.action = na.exclude)$fitted.values
 
 dim(XA); dim(XN)
 
 # Non-allowable covariates
 
 
-df_yz <- read_csv("../data/list1_YZG.csv")
 
-G <- df_yz$sex_min
-Z <- df_yz$parent_accept
-Y <- df_yz$ideation
 
 mu1 <- mean(Y[G == 1])
 mu0 <- mean(Y[G == 0])
@@ -49,6 +81,7 @@ mean(Z[G == 1]) - mean(Z[G == 0])
 
 obs_disp <- mu1 - mu0
 obs_disp
+mean(Y[G == 1]) - mean(Y[G == 0])
 
 sd_obs_disp <- sqrt(var(Y[G == 1]) / sum(G == 1) + var(Y[G == 0]) / sum(G == 0))
 

@@ -168,7 +168,7 @@ mu1 - mu10
 decompsens::getExtrema(G=G, Y=Y, w=w, gamma = log(1.05), estimand = "point", RD = TRUE, verbose = FALSE)
 mu1
 
-num_cov_lbl <- 8
+num_cov_lbl <- 4
 
 psize <- 6
 
@@ -271,11 +271,9 @@ generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
   strongest_cov_df_long <- strongest_cov_df %>% 
     pivot_longer(cols = c("imbal", "imbal_wt"), names_to = "imbal_type", values_to = "imbal_val") 
   
-  num_cov <- min(nrow(strongest_cov_df), num_cov_lbl * 2)
-  p1_full <- p1 + geom_point(data = strongest_cov_df_long[1:num_cov,], 
-                             aes(x = imbal_val, y = coeff, z = 0, color = imbal_type), size = psize) + 
-    scale_color_manual(labels = c("imbal" = "Pre-wt", "imbal_wt" = "Post-wt"),
-                       values = c("imbal" = "red", "imbal_wt" = "forestgreen"))
+  num_cov <- max(nrow(strongest_cov_df), num_cov_lbl)
+  p1_full <- p1 + geom_point(data = strongest_cov_df_long %>% filter(imbal_type == "imbal") %>% slice(1:num_cov), 
+                             aes(x = imbal_val, y = coeff, z = 0), size = psize, color = "red")
   
   # teal: #00BFC4
   # reddish: #F8766D
