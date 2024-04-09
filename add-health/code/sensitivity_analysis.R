@@ -70,6 +70,7 @@ summary(w)
 
 mu10 <- sum(Y[G == 1] * w[G == 1]) / sum(w[G == 1])
 mu10
+
 mu1
 mu0
 
@@ -309,8 +310,8 @@ generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
   p1_full_unscaled
 }
 
-resid_plot <- generatePlot(num_cov_lbl = 10, psize = 5, estimand = "resid")
-red_plot <- generatePlot(num_cov_lbl = 10, psize = 5, estimand = "red")
+resid_plot <- generatePlot(num_cov_lbl = 8, psize = 5, estimand = "resid")
+red_plot <- generatePlot(num_cov_lbl = 8, psize = 5, estimand = "red")
 
 resid_plot
 ggsave("plots/resid_plot_add.png", resid_plot, width = 10, height = 10)

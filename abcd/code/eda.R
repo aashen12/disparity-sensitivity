@@ -101,7 +101,7 @@ df1 <- df_withz %>%
   select(all_of(list1)) %>%
   mutate(sib_order = case_when(sib_num == 0 ~ 1,
                                .default = sib_order)) %>% 
-  drop_na(sex_min, ideation, parent_accept) %>% drop_na()
+  drop_na(sex_min, ideation, parent_accept) #%>% drop_na()
 
 
 df1 %>% group_by(sex_min) %>% 
@@ -122,8 +122,7 @@ Z <- df1$parent_accept
 table(Z)
 table(Y)
 table(G)
-
-
+any(is.na(Z))
 
 
 
@@ -144,27 +143,6 @@ X_list2 <- c("family_conflict" = "fes_y_ss_fc_mean",
              "negative_life_events" = "fes_y_ss_nle_mean", 
              "cyberbullying" = "bully_cyb_mean", 
              "peer_victimization" = "bully_vic_mean")
-
-
-Y <- df1$ideation
-G <- df1$sex_min
-Z <- df1$parent_accept
-
-table(Z)
-table(Y)
-table(G)
-
-
-
-mean(Z[G == 1])
-mean(Z[G == 0])
-
-mean(Z[G == 0])-mean(Z[G == 1])
-
-mean(Y[G == 1])
-mean(Y[G == 0])
-
-mean(Y[G == 1])-mean(Y[G == 0])
 
 
 
