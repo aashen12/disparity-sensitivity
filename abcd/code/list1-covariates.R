@@ -140,7 +140,7 @@ post_weight_G <- colSums(X_stnd[G == 1, ] * w[G == 1]) / sum(w[G == 1]) -
   colSums(X_stnd[G == 0, ] * w[G == 0])  / sum(w[G == 0])
 lovePlot(pre_weight_G, post_weight_G, title = "Covariate Balance wrt Sexual Minority Status")
 
-post_weight_G <- colSums(X_stnd[G == 1, ] * w[G == 1]) / sum(w[G == 1]) - colMeans(X_stnd[G == 0, ])
+post_weight_G <- colSums(X_stnd[G == 1, ] * w[G == 1]) / sum(w[G == 1]) - colMeans(X_stnd[G == 1, ])
 lovePlot(pre_weight_G, post_weight_G, title = "Covariate Balance wrt Sexual Minority Status")
 
 
