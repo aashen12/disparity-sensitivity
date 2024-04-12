@@ -56,7 +56,8 @@ obs_disp
 sd_obs_disp <- sqrt(var(Y[G == 1]) / sum(G == 1) + var(Y[G == 0]) / sum(G == 0))
 
 # construct 95% CI for obs_disp
-ci <- c(obs_disp - qnorm(0.95) * sd_obs_disp, obs_disp + qnorm(0.95) * sd_obs_disp)
+alpha <- 0.05
+ci <- c(obs_disp - qnorm(1-alpha/2) * sd_obs_disp, obs_disp + qnorm(1-alpha/2) * sd_obs_disp)
 ci
 
 
