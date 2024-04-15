@@ -5,37 +5,16 @@ set.seed(122357)
 
 raw_df <- read_csv("../data/data_wide_SM.csv")
 
-ldf <- read_csv("../data/data_SM.csv")
+# ldf <- read_csv("../data/data_SM.csv")
 
-## Construct binarized version of parental acceptance ##
-
-## Parental acceptance: crpbi_y_ss_parent_mean crpbi_y_ss_caregiver_mean
-
-parent <- raw_df$crpbi_y_ss_parent_mean
-caregiver <- raw_df$crpbi_y_ss_caregiver_mean
-sm <- raw_df$SM_inclusive_y_br_ever
-
-summary(parent)
-summary(caregiver)
-
-
-data.frame(parent, caregiver, sm) %>% 
-  filter(!is.na(parent) & !is.na(caregiver)) %>% 
-  pivot_longer(cols = c(parent, caregiver), names_to = "role", values_to = "score") %>%
-  ggplot(aes(x = score, fill = role)) +
-  geom_density(color = "black", alpha = 0.5) +
-  labs(x = "score", y = "density", title = "Density plot of parental and caregiver acceptance scores",
-       fill = "Role") + 
-  facet_wrap(~sm) +
-  theme_minimal() +
-  theme(legend.position = "bottom") + 
-  theme(text = element_text(size = 20)) 
-
-
-
-accept <- mean(parent + caregiver, na.rm = TRUE)
-
-hist(parent + caregiver)
+Z_method <- 1 # aggregate = 0, or specify number 1-5
+Z_method_questions <- c(
+  "better_worry",
+  "smile",
+  "better_upset",
+  "love",
+  "easy_talk"
+)
 
 ##################################################################
 ##           Parental and caregiver acceptance scores           ##
@@ -54,14 +33,7 @@ hist(parent + caregiver)
 # crpbi_caregiver15_y	Believes in showing their love for me.
 # crpbi_caregiver16_y	Is easy to talk to.
 
-Z_method <- 0 # aggregate = 0, or specify number 1-5
-Z_method_questions <- c(
-  "better_worry",
-  "smile",
-  "better_upset",
-  "love",
-  "easy_talk"
-)
+
 
 
 if (Z_method == 0) {
@@ -98,8 +70,10 @@ if (Z_method == 0) {
   df_withz <- raw_df %>%
     rename(prop_1_parent = all_of(parent_column), prop_1_caregiver = all_of(caregiver_column)) %>%
     #select(src_subject_id, prop_1_parent = all_of(parent_column), prop_1_caregiver = all_of(caregiver_column)) %>%
-    mutate(prop_1_parent = ifelse(is.na(prop_1_parent), NA, ifelse(prop_1_parent == max(prop_1_parent, na.rm = TRUE), 1, 0))) %>%
-    mutate(prop_1_caregiver = ifelse(is.na(prop_1_caregiver), NA, ifelse(prop_1_caregiver == max(prop_1_caregiver, na.rm = TRUE), 1, 0))) %>%
+    mutate(prop_1_parent = ifelse(is.na(prop_1_parent), NA, 
+                                  ifelse(prop_1_parent == max(prop_1_parent, na.rm = TRUE), 1, 0))) %>%
+    mutate(prop_1_caregiver = ifelse(is.na(prop_1_caregiver), NA, 
+                                     ifelse(prop_1_caregiver == max(prop_1_caregiver, na.rm = TRUE), 1, 0))) %>%
     mutate(parent_accept = case_when(
       prop_1_parent == 1 & prop_1_caregiver == 1 ~ 1,
       prop_1_parent == 1 & is.na(prop_1_caregiver) ~ 1,
@@ -143,7 +117,7 @@ length(list1)
 
 
 df1 <- df_withz %>% 
-  select(all_of(list1)) %>%
+  select(src_subject_id, all_of(list1)) %>%
   mutate(sib_order = case_when(sib_num == 0 ~ 1,
                                .default = sib_order)) %>% 
   drop_na(sex_min, ideation, parent_accept) #%>% drop_na()
@@ -153,11 +127,11 @@ df1 %>% group_by(sex_min) %>%
   summarise(n = n(), mean(ideation), mean(parent_accept))
 
 
-df_x1 <- df1 %>% select(all_of(names(c(demographics, X_list1))))
+df_x1 <- df1 %>% select(src_subject_id, all_of(names(c(demographics, X_list1))))
 write_csv(df_x1, paste0("../data/list1_X_", Z_method_question, ".csv"))
 
 
-df_yz1 <- df1 %>% select(all_of(c(names(Y_var), names(Z_var), names(G_var), "peer_victimization")))
+df_yz1 <- df1 %>% select(src_subject_id, all_of(c(names(Y_var), names(Z_var), names(G_var), "peer_victimization")))
 write_csv(df_yz1, paste0("../data/list1_YZG_", Z_method_question, ".csv"))
 
 message(paste0("Wrote df for Z method: ", Z_method_question))
@@ -214,4 +188,32 @@ X_list2 <- c("family_conflict" = "fes_y_ss_fc_mean",
 #     .default = NA
 #   ))
 
+
+## Parental acceptance: crpbi_y_ss_parent_mean crpbi_y_ss_caregiver_mean
+
+parent <- raw_df$crpbi_y_ss_parent_mean
+caregiver <- raw_df$crpbi_y_ss_caregiver_mean
+sm <- raw_df$SM_inclusive_y_br_ever
+
+summary(parent)
+summary(caregiver)
+
+
+data.frame(parent, caregiver, sm) %>% 
+  filter(!is.na(parent) & !is.na(caregiver)) %>% 
+  pivot_longer(cols = c(parent, caregiver), names_to = "role", values_to = "score") %>%
+  ggplot(aes(x = score, fill = role)) +
+  geom_density(color = "black", alpha = 0.5) +
+  labs(x = "score", y = "density", title = "Density plot of parental and caregiver acceptance scores",
+       fill = "Role") + 
+  facet_wrap(~sm) +
+  theme_minimal() +
+  theme(legend.position = "bottom") + 
+  theme(text = element_text(size = 20)) 
+
+
+
+accept <- mean(parent + caregiver, na.rm = TRUE)
+
+hist(parent + caregiver)
 

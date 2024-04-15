@@ -13,7 +13,15 @@ numCores <- parallel::detectCores()
 
 doParallel::registerDoParallel(numCores)
 
-Z_method <- "aggregate"
+Z_method <- "better_upset"
+# "better_worry",
+# "smile",
+# "better_upset",
+# "love",
+# "easy_talk
+# aggregate
+
+
 
 df_x <- read_csv(paste0("../data/list1_X_", Z_method, ".csv"))
 df_yz <- read_csv(paste0("../data/list1_YZG_", Z_method, ".csv"))
@@ -65,7 +73,7 @@ allowable <- TRUE
 trim <- 0.01
 
 if (allowable) {
-  if (Z_method != "aggregate") {
+  if (Z_method == "aggregate") {
     e0 <- glm(Z ~ ., data = XA_log, family = binomial, weights = 1 - G, na.action = na.exclude)$fitted.values
     e1 <- glm(Z ~ ., data = X_log, family = binomial, weights = G, na.action = na.exclude)$fitted.values
   } else {
@@ -91,6 +99,8 @@ summary(w)
 
 df_yz <- df_yz %>% mutate(w_rmpw = w)
 write_csv(df_yz, paste0("../data/list1_YZGW_", Z_method, ".csv"))
+
+message(paste0("CSV file for Z method ", Z_method, " has been written."))
 
 # assess balance in X
 
