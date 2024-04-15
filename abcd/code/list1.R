@@ -6,90 +6,24 @@ library(doParallel)
 library(boot)
 library(latex2exp)
 
-
+source("functions.R")
 set.seed(122357)
 
 numCores <- parallel::detectCores()
 
 doParallel::registerDoParallel(numCores)
 
-df_x <- read_csv("../data/list1_X.csv")
-df_yz <- read_csv("../data/list1_YZG.csv")
+Z_method <- "aggregate"
+
+df_yz <- read_csv(paste0("../data/list1_YZGW_", Z_method, ".csv"))
 
 G <- df_yz$sex_min
 Z <- df_yz$parent_accept
 Y <- df_yz$ideation
-
-# Allowable covariates 
-options(na.action='na.pass')
+w <- df_yz$w_rmpw
 
 
-#mediators <- c("peer_victimization")
-mediators <- c("")
-allowable_covs <- c("age", "sex", "sib_num", "sib_order")
-#allowable_covs <- c("age", "sex", "sib_num", "sib_order", "income", "adi")
-non_allowable_covs <- setdiff(names(df_x)[!names(df_x) %in% mediators], allowable_covs)
-
-df <- df_allowable <- model.matrix(~ . -1, data = df_x %>% select(all_of(allowable_covs))) %>% 
-  data.frame() %>% NAImpute()
-XA_log <- create_model_matrix(df_allowable)
-
-df <- df_non_allowable <- model.matrix(~ . -1, data = df_x %>% select(all_of(non_allowable_covs))) %>% 
-  data.frame() %>% NAImpute()
-XN_log <- create_model_matrix(df_non_allowable)
-
-
-# XA <- model.matrix(~ .^2 -1, data = df_x %>% select(all_of(allowable_covs))) %>% 
-#   data.frame() %>%
-#   NAImpute()
-# XA <- XA[, !grepl(":.*NA$", colnames(XA))
-# XN <- model.matrix(~ .^2 -1, data = df_x %>% select(all_of(non_allowable_covs))) %>% NAImpute()
-# XN <- XN[, !grepl(":.*NA$", colnames(XN))]
-
-X_log <- cbind(XA_log, XN_log)
-
-# Non-allowable covariates
-
-
-df_yz <- read_csv("../data/list1_YZG.csv")
-
-G <- df_yz$sex_min
-Z <- df_yz$parent_accept
-
-df_yz %>% group_by(sex_min) %>% 
-  summarise(
-    n = n(),
-    mean_parent_accept = mean(parent_accept, na.rm = FALSE),
-    sd_parent_accept = sd(parent_accept, na.rm = FALSE)
-  )
-
-allowable <- TRUE
-trim <- 0.01
-
-if (allowable) {
-  e0 <- glm(Z ~ XA_log, family = binomial, weights = 1 - G, na.action = na.exclude)$fitted.values
-  e1 <- glm(Z ~ X_log, family = binomial, weights = G, na.action = na.exclude)$fitted.values
-} else {
-  e0 <- glm(Z ~ X_log, family = binomial, weights = 1 - G, na.action = na.exclude)$fitted.values
-  e1 <- glm(Z ~ X_log, family = binomial, weights = G, na.action = na.exclude)$fitted.values
-}
-
-e0 <- pmax(pmin(e0, 1 - trim), trim)
-e1 <- pmax(pmin(e1, 1 - trim), trim)
-
-#wr <- glm(G ~ 1, family = binomial, na.action = na.exclude)$fitted.values / glm(G ~ XA[, "age"] + XA[, "sexF"] + XA[, "sexM"], family = binomial, na.action = na.exclude)$fitted.values
-wr <- 1
-
-w1 = e0 / e1 * wr
-w0 = (1 - e0) / (1 - e1) * wr
-w = w1 * Z + w0 * (1 - Z)
-
-
-# Non-allowable covariates
-
-
-
-
+# OUTCOMES
 mu1 <- mean(Y[G == 1])
 mu0 <- mean(Y[G == 0])
 
@@ -129,47 +63,25 @@ mu10/mu0
 ## Bootstrap standard errors
 B <- 1000
 resid_boot <- numeric(B)
-# out <- parallel::mclapply(1:B, function(i) {
-#   ind <- sample(1:length(Y), length(Y), replace = TRUE)
-#   w_boot <- decompsens::estimateRMPW(G=G[ind], Z=Z[ind], Y=Y[ind], XA=XA[ind,], XN=XN[ind,], 
-#                                      trim = trim, allowable = allow)
-#   mu10_boot <- sum(Y[ind][G[ind] == 1] * w_boot[G[ind] == 1]) / sum(w_boot[G[ind] == 1])
-#   mu1_boot <- mean(Y[ind][G[ind] == 1])
-#   mu0_boot <- mean(Y[ind][G[ind] == 0])
-#   resid_boot <- mu10_boot - mu0_boot
-#   red_boot <- mu1_boot - mu10_boot
-#   list(resid_boot = resid_boot, red_boot = red_boot)
-# }, mc.cores = parallel::detectCores())
-# 
-# out_resid <- unlist(lapply(out, function(x) x[["resid_boot"]]))
-# out_red <- unlist(lapply(out, function(x) x[["red_boot"]]))
+out <- parallel::mclapply(1:B, function(i) {
+  ind <- sample(1:length(Y), length(Y), replace = TRUE)
+  w_boot <- decompsens::estimateRMPW(G=G[ind], Z=Z[ind], Y=Y[ind], XA=XA_log[ind,], XN=XN_log[ind,],
+                                     trim = trim, allowable = allow)
+  mu10_boot <- sum(Y[ind][G[ind] == 1] * w_boot[G[ind] == 1]) / sum(w_boot[G[ind] == 1])
+  mu1_boot <- mean(Y[ind][G[ind] == 1])
+  mu0_boot <- mean(Y[ind][G[ind] == 0])
+  resid_boot <- mu10_boot - mu0_boot
+  red_boot <- mu1_boot - mu10_boot
+  list(resid_boot = resid_boot, red_boot = red_boot)
+}, mc.cores = parallel::detectCores())
 
-# boot_resid <- boot(Y, function(Y, ind) {
-#   w_boot <- decompsens::estimateRMPW(G=G[ind], Z=Z[ind], Y=Y[ind], XA=XA[ind,], XN=XN[ind,], 
-#                                      trim = trim, allowable = allow)
-#   mu10_boot <- sum(Y[ind][G[ind] == 1] * w_boot[G[ind] == 1]) / sum(w_boot[G[ind] == 1])
-#   mu1_boot <- mean(Y[ind][G[ind] == 1])
-#   mu0_boot <- mean(Y[ind][G[ind] == 0])
-#   mu10_boot - mu0_boot
-# }, R = 100)
-# 
-# boot_red <- boot(Y, function(Y, ind) {
-#   w_boot <- decompsens::estimateRMPW(G=G[ind], Z=Z[ind], Y=Y[ind], XA=XA[ind,], XN=XN[ind,], 
-#                                      trim = trim, allowable = allow)
-#   mu10_boot <- sum(Y[ind][G[ind] == 1] * w_boot[G[ind] == 1]) / sum(w_boot[G[ind] == 1])
-#   mu1_boot <- mean(Y[ind][G[ind] == 1])
-#   mu0_boot <- mean(Y[ind][G[ind] == 0])
-#   mu1_boot - mu10_boot
-# }, R = 100)
-# 
-# boot_resid
-# residual
-# boot_resid$t0
-# 
-# 
-# boot_red
-# reduction
-# boot_red$t0
+out_resid <- unlist(lapply(out, function(x) x[["resid_boot"]]))
+out_red <- unlist(lapply(out, function(x) x[["red_boot"]]))
+
+c(quantile(out_resid, c(0.025, 0.975)), residual)
+
+c(quantile(out_red, c(0.025, 0.975)), reduction)
+
 
 
 lam <- 5
