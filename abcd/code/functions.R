@@ -9,8 +9,10 @@ NAImpute <- function(df, append = FALSE) {
       if(all(df[,i][!is.na(df[,i])] %in% c(0, 1))) {
         df[which(is.na(df[,i])),i] <- names(sort(-table(df[,i])))[1] %>% as.numeric()
         df[which(is.na(df[,i])),i] <- as.numeric(df[which(is.na(df[,i])),i])
+        # if binary, use mode imputation
       } else {
         df[which(is.na(df[,i])),i] <- mean(df[,i], na.rm = TRUE)
+        # if continuous, use mean imputation
       }
     }
   }

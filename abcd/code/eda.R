@@ -1,3 +1,4 @@
+rm(list = ls())
 library(tidyverse)
 
 set.seed(122357)
@@ -7,7 +8,7 @@ raw_df <- read_csv("../data/data_wide_SM.csv")
 
 # ldf <- read_csv("../data/data_SM.csv")
 
-Z_method <- 0 # aggregate = 0, or specify number 1-5
+Z_method <- 6 # aggregate = 0, or specify number 1-5. if 6 then we aggregate the better_worry + better_upset
 Z_method_questions <- c(
   "better_worry",
   "smile",
@@ -62,7 +63,8 @@ if (Z_method == 0) {
       prop_1_parent <= thresh & prop_1_caregiver == 0 ~ 0,
       prop_1_parent == 0 & is.na(prop_1_caregiver) ~ 0
     ))
-} else {
+  print(paste0("Z_method = ", Z_method))
+} else if (Z_method %in% 1:5) {
   Z_method_question <- Z_method_questions[Z_method]
   parent_questions <- paste0("crpbi_parent", 1:5, "_y_mean")
   caregiver_questions <- paste0("crpbi_caregiver", 12:16, "_y_mean") # crpbi_caregiver12_y
@@ -82,9 +84,32 @@ if (Z_method == 0) {
       prop_1_parent == 0 & prop_1_caregiver == 0 ~ 0,
       prop_1_parent == 0 & is.na(prop_1_caregiver) ~ 0
     ))
+  print(paste0("Z_method = ", Z_method))
+} else if (Z_method == 6) {
+  thresh <- 3 + 3 + 3 + 2.99#2.65
+  Z_method_question <- "worry_upset"
+  parent_column <- paste0("crpbi_parent", c(1, 3), "_y_mean")
+  caregiver_column <- paste0("crpbi_caregiver", c(1, 3) + 11, "_y_mean")
+  df_withz <- raw_df %>% 
+    rename(parent_worry = all_of(parent_column[1]), parent_upset = all_of(parent_column[2]),
+           caregiver_worry = all_of(caregiver_column[1]), caregiver_upset = all_of(caregiver_column[2])) %>%
+    #select(src_subject_id, parent_worry, parent_upset, caregiver_worry, caregiver_upset) %>% 
+    group_by(src_subject_id) %>%
+    mutate(parent_accept = case_when(
+      sum(parent_worry, parent_upset, caregiver_worry, caregiver_upset, na.rm = FALSE) > thresh ~ 1,
+      !is.na(caregiver_worry) & !is.na(caregiver_upset) & all(parent_worry <= 2.99, parent_upset <= 2.99, caregiver_worry <= 2.99, caregiver_upset <= 2.99) ~ 0,
+      sum(parent_worry, parent_upset) >= 5.99 & is.na(caregiver_worry) & is.na(caregiver_upset) ~ 1,
+      all(parent_worry < 2.99, parent_upset < 2.99) & is.na(caregiver_worry) & is.na(caregiver_upset) ~ 0,
+      .default = NA
+    )) %>% ungroup()
+    print(paste0("Z_method = ", Z_method))
 }
 
 Z_var <- c("parent_accept" = "parent_accept")
+
+# NDAR_INVXMJE5DN0
+
+
 
 
 Y_var <- c("ideation" = "SI_y_ever") # ideation

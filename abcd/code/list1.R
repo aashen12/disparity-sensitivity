@@ -1,4 +1,5 @@
 # Analysis of list 1
+rm(list = ls())
 library(tidyverse)
 library(decompsens)
 library(parallel)
@@ -13,17 +14,41 @@ numCores <- parallel::detectCores()
 
 doParallel::registerDoParallel(numCores)
 
-Z_method <- "aggregate"
+Z_method <- "worry_upset"
 # "better_worry",
 # "smile",
 # "better_upset",
 # "love",
 # "easy_talk
 # aggregate
+# worry_upset
 
 df_yz <- read_csv(paste0("../data/list1_YZGW_", Z_method, ".csv"))
 
 df_x <- read_csv(paste0("../data/list1_X_", Z_method, ".csv"))
+mediators <- c("src_subject_id")
+allowable_covs <- c("age", "sex", "sib_num", "sib_order")
+#allowable_covs <- c("age", "sex", "sib_num", "sib_order", "income", "adi")
+non_allowable_covs <- setdiff(names(df_x)[!names(df_x) %in% mediators], allowable_covs)
+
+df <- df_allowable <- model.matrix(~ .^2 -1, data = df_x %>% select(all_of(allowable_covs))) %>% 
+  data.frame() %>% NAImpute()
+
+df <- df_non_allowable <- model.matrix(~ .^2 -1, data = df_x %>% select(all_of(non_allowable_covs))) %>% 
+  data.frame() %>% NAImpute()
+
+interact <- FALSE
+
+if (interact == TRUE) {
+  XA_log <- create_model_matrix(df_allowable)
+  XN_log <- create_model_matrix(df_non_allowable)
+  X_log <- cbind(XA_log, XN_log)
+} else {
+  XA_log <- df_allowable
+  XN_log <- df_non_allowable
+  X_log <- cbind(XA_log, XN_log)
+}
+
 
 G <- df_yz$sex_min
 Z <- df_yz$parent_accept
@@ -63,26 +88,31 @@ obs_disp
 reduction <- mu1 - mu10
 reduction
 mu1/mu10
+reduction / obs_disp
+
 
 residual <- mu10 - mu0
 residual
 mu10/mu0
+residual / obs_disp
 
 
 ## Bootstrap standard errors
 B <- 1000
 resid_boot <- numeric(B)
+allowable <- TRUE
 out <- parallel::mclapply(1:B, function(i) {
   ind <- sample(1:length(Y), length(Y), replace = TRUE)
   w_boot <- decompsens::estimateRMPW(G=G[ind], Z=Z[ind], Y=Y[ind], XA=XA_log[ind,], XN=XN_log[ind,],
-                                     trim = trim, allowable = allow)
+                                     trim = 0.01, allowable = TRUE)
+  
   mu10_boot <- sum(Y[ind][G[ind] == 1] * w_boot[G[ind] == 1]) / sum(w_boot[G[ind] == 1])
   mu1_boot <- mean(Y[ind][G[ind] == 1])
   mu0_boot <- mean(Y[ind][G[ind] == 0])
   resid_boot <- mu10_boot - mu0_boot
   red_boot <- mu1_boot - mu10_boot
   list(resid_boot = resid_boot, red_boot = red_boot)
-}, mc.cores = parallel::detectCores())
+}, mc.cores = numCores)
 
 out_resid <- unlist(lapply(out, function(x) x[["resid_boot"]]))
 out_red <- unlist(lapply(out, function(x) x[["red_boot"]]))
@@ -91,6 +121,9 @@ c(quantile(out_resid, c(0.025, 0.975)), residual)
 
 c(quantile(out_red, c(0.025, 0.975)), reduction)
 
+sd(out_red)
+mean(out_red)
+reduction
 
 
 lam <- 5
@@ -149,7 +182,7 @@ psize <- 6
 
 XA <- model.matrix(~ . -1, data = df_x %>% select(all_of(allowable_covs))) %>% NAImpute()
 XA <- XA[, !grepl(":.*NA$", colnames(XA))]
-XN <- model.matrix(~ .^2 -1, data = df_x %>% select(all_of(non_allowable_covs))) %>% NAImpute()
+XN <- model.matrix(~ . -1, data = df_x %>% select(all_of(non_allowable_covs))) %>% NAImpute()
 XN <- XN[, !grepl(":.*NA$", colnames(XN))]
 
 generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
@@ -186,6 +219,11 @@ generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
   print(paste0("Lambda: ", Lam))
   
   bounds <- decompsens::getBiasBounds(G, Z, XA, XN, Y, Lambda = Lam)
+  
+  # even if we care about red or res, we use point bc the lambda already takes
+  # into account whether we care about red or res
+  
+  # return bounds and mu_10_hat
   amplification <- decompsens::informalAmplify(G, Z, XA, XN, Y, Lambda = Lam)
   
   strongest_cov_df <- amplification[[1]] %>% drop_na()

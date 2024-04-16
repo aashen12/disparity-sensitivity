@@ -1,4 +1,6 @@
 # Analysis of list 1
+rm(list = ls())
+
 library(tidyverse)
 library(decompsens)
 library(parallel)
@@ -13,15 +15,16 @@ numCores <- parallel::detectCores()
 
 doParallel::registerDoParallel(numCores)
 
-Z_method <- "aggregate"
+Z_method <- "worry_upset"
 # "better_worry",
 # "smile",
 # "better_upset",
 # "love",
 # "easy_talk
 # aggregate
+# worry_upset
 
-
+interact <- FALSE
 
 df_x <- read_csv(paste0("../data/list1_X_", Z_method, ".csv"))
 df_yz <- read_csv(paste0("../data/list1_YZG_", Z_method, ".csv"))
@@ -29,6 +32,10 @@ df_yz <- read_csv(paste0("../data/list1_YZG_", Z_method, ".csv"))
 G <- df_yz$sex_min
 Z <- df_yz$parent_accept
 Y <- df_yz$ideation
+
+table(Z)
+table(G)
+table(Y)
 
 # Allowable covariates 
 options(na.action='na.pass')
@@ -40,14 +47,17 @@ allowable_covs <- c("age", "sex", "sib_num", "sib_order")
 #allowable_covs <- c("age", "sex", "sib_num", "sib_order", "income", "adi")
 non_allowable_covs <- setdiff(names(df_x)[!names(df_x) %in% mediators], allowable_covs)
 
-df <- df_allowable <- model.matrix(~ . -1, data = df_x %>% select(all_of(allowable_covs))) %>% 
+df <- df_allowable <- model.matrix(~ .^2 -1, data = df_x %>% select(all_of(allowable_covs))) %>% 
   data.frame() %>% NAImpute()
-#XA_log <- create_model_matrix(df_allowable)
 
-df <- df_non_allowable <- model.matrix(~ . -1, data = df_x %>% select(all_of(non_allowable_covs))) %>% 
+df <- df_non_allowable <- model.matrix(~ .^2 -1, data = df_x %>% select(all_of(non_allowable_covs))) %>% 
   data.frame() %>% NAImpute()
-#XN_log <- create_model_matrix(df_non_allowable)
 
+if (interact == TRUE) {
+  XA_log <- create_model_matrix(df_allowable)
+  XN_log <- create_model_matrix(df_non_allowable)
+  X_log <- cbind(XA_log, XN_log)
+}
 
 # log stands for "logistic". We use a more comlex martix to construct the propensity scores
 
@@ -69,31 +79,12 @@ df_yz %>% group_by(sex_min) %>%
     sd_parent_accept = sd(parent_accept, na.rm = FALSE)
   )
 
-allowable <- TRUE
-trim <- 0.01
+allow <- TRUE
 
-if (allowable) {
-  if (Z_method %in% c("aggregate", "better_worry", "smile", "better_upset")) {
-    e0 <- glm(Z ~ ., data = df_allowable, family = binomial, weights = 1 - G, na.action = na.exclude)$fitted.values
-    e1 <- glm(Z ~ ., data = cbind(df_non_allowable, df_allowable), family = binomial, weights = G, na.action = na.exclude)$fitted.values
-  } else {
-    e0 <- glm(Z ~ XA_log, family = binomial, weights = 1 - G, na.action = na.exclude)$fitted.values
-    e1 <- glm(Z ~ X_log, family = binomial, weights = G, na.action = na.exclude)$fitted.values
-  }
-} else {
-  e0 <- glm(Z ~ X_log, family = binomial, weights = 1 - G, na.action = na.exclude)$fitted.values
-  e1 <- glm(Z ~ X_log, family = binomial, weights = G, na.action = na.exclude)$fitted.values
-}
 
-e0 <- pmax(pmin(e0, 1 - trim), trim)
-e1 <- pmax(pmin(e1, 1 - trim), trim)
 
-#wr <- glm(G ~ 1, family = binomial, na.action = na.exclude)$fitted.values / glm(G ~ XA[, "age"] + XA[, "sexF"] + XA[, "sexM"], family = binomial, na.action = na.exclude)$fitted.values
-wr <- 1
-
-w1 = e0 / e1 * wr
-w0 = (1 - e0) / (1 - e1) * wr
-w = w1 * Z + w0 * (1 - Z)
+w <- decompsens::estimateRMPW(G=G, Z=Z, Y=Y, XA=df_allowable, XN=df_non_allowable,
+                                        trim = 0.01, allowable = allow)
 
 summary(w)
 
@@ -117,18 +108,18 @@ post_weight_G <- colSums(X_stnd[G == 1, ] * w[G == 1]) / sum(w[G == 1]) -
   colSums(X_stnd[G == 0, ] * w[G == 0])  / sum(w[G == 0])
 lovePlot(pre_weight_G, post_weight_G, title = "Covariate Balance wrt Sexual Minority Status")
 
-post_weight_G <- colSums(X_stnd[G == 1, ] * w[G == 1]) / sum(w[G == 1]) - colMeans(X_stnd[G == 0, ])
+post_weight_G <- colSums(X_stnd[G == 1, ] * w[G == 1]) / sum(w[G == 1]) - colMeans(X_stnd[G == 1, ])
 lovePlot(pre_weight_G, post_weight_G, title = "Covariate Balance wrt Sexual Minority Status")
 
 
-pre_weight_Z <- colMeans(X_stnd[Z == 1, ]) - colMeans(X_stnd[Z == 0, ])
-max(abs(pre_weight_Z))
-
-post_weight_Z <- colSums(X_stnd[Z == 1, ] * w[Z == 1] / sum(w[Z == 1])) - colMeans(X_stnd[Z == 0, ])
-max(abs(post_weight_Z))
-
-loveZ <- lovePlot(pre_weight_Z, post_weight_Z, title = "Covariate Balance wrt Parental Support")
-loveZ
+# pre_weight_Z <- colMeans(X_stnd[Z == 1, ]) - colMeans(X_stnd[Z == 0, ])
+# max(abs(pre_weight_Z))
+# 
+# post_weight_Z <- colSums(X_stnd[Z == 1, ] * w[Z == 1] / sum(w[Z == 1])) - colMeans(X_stnd[Z == 0, ])
+# max(abs(post_weight_Z))
+# 
+# loveZ <- lovePlot(pre_weight_Z, post_weight_Z, title = "Covariate Balance wrt Parental Support")
+# loveZ
 
 # Assess balance in X for the sexual minority group
 
