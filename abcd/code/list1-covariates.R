@@ -13,7 +13,7 @@ numCores <- parallel::detectCores()
 
 doParallel::registerDoParallel(numCores)
 
-Z_method <- "better_upset"
+Z_method <- "aggregate"
 # "better_worry",
 # "smile",
 # "better_upset",
@@ -35,18 +35,19 @@ options(na.action='na.pass')
 
 
 #mediators <- c("peer_victimization")
-mediators <- c("")
+mediators <- c("src_subject_id")
 allowable_covs <- c("age", "sex", "sib_num", "sib_order")
 #allowable_covs <- c("age", "sex", "sib_num", "sib_order", "income", "adi")
 non_allowable_covs <- setdiff(names(df_x)[!names(df_x) %in% mediators], allowable_covs)
 
 df <- df_allowable <- model.matrix(~ . -1, data = df_x %>% select(all_of(allowable_covs))) %>% 
   data.frame() %>% NAImpute()
-XA_log <- create_model_matrix(df_allowable)
+#XA_log <- create_model_matrix(df_allowable)
 
 df <- df_non_allowable <- model.matrix(~ . -1, data = df_x %>% select(all_of(non_allowable_covs))) %>% 
   data.frame() %>% NAImpute()
-XN_log <- create_model_matrix(df_non_allowable)
+#XN_log <- create_model_matrix(df_non_allowable)
+
 
 # log stands for "logistic". We use a more comlex martix to construct the propensity scores
 
@@ -57,7 +58,6 @@ XN_log <- create_model_matrix(df_non_allowable)
 # XN_log <- model.matrix(~ .^2 -1, data = df_x %>% select(all_of(non_allowable_covs))) %>% NAImpute()
 # XN_log <- XN_log[, !grepl(":.*NA$", colnames(XN_log))]
 
-X_log <- cbind(XA_log, XN_log)
 
 # Non-allowable covariates
 
@@ -73,9 +73,9 @@ allowable <- TRUE
 trim <- 0.01
 
 if (allowable) {
-  if (Z_method == "aggregate") {
-    e0 <- glm(Z ~ ., data = XA_log, family = binomial, weights = 1 - G, na.action = na.exclude)$fitted.values
-    e1 <- glm(Z ~ ., data = X_log, family = binomial, weights = G, na.action = na.exclude)$fitted.values
+  if (Z_method %in% c("aggregate", "better_worry", "smile", "better_upset")) {
+    e0 <- glm(Z ~ ., data = df_allowable, family = binomial, weights = 1 - G, na.action = na.exclude)$fitted.values
+    e1 <- glm(Z ~ ., data = cbind(df_non_allowable, df_allowable), family = binomial, weights = G, na.action = na.exclude)$fitted.values
   } else {
     e0 <- glm(Z ~ XA_log, family = binomial, weights = 1 - G, na.action = na.exclude)$fitted.values
     e1 <- glm(Z ~ X_log, family = binomial, weights = G, na.action = na.exclude)$fitted.values
@@ -117,7 +117,7 @@ post_weight_G <- colSums(X_stnd[G == 1, ] * w[G == 1]) / sum(w[G == 1]) -
   colSums(X_stnd[G == 0, ] * w[G == 0])  / sum(w[G == 0])
 lovePlot(pre_weight_G, post_weight_G, title = "Covariate Balance wrt Sexual Minority Status")
 
-post_weight_G <- colSums(X_stnd[G == 1, ] * w[G == 1]) / sum(w[G == 1]) - colMeans(X_stnd[G == 1, ])
+post_weight_G <- colSums(X_stnd[G == 1, ] * w[G == 1]) / sum(w[G == 1]) - colMeans(X_stnd[G == 0, ])
 lovePlot(pre_weight_G, post_weight_G, title = "Covariate Balance wrt Sexual Minority Status")
 
 

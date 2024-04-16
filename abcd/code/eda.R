@@ -7,7 +7,7 @@ raw_df <- read_csv("../data/data_wide_SM.csv")
 
 # ldf <- read_csv("../data/data_SM.csv")
 
-Z_method <- 1 # aggregate = 0, or specify number 1-5
+Z_method <- 0 # aggregate = 0, or specify number 1-5
 Z_method_questions <- c(
   "better_worry",
   "smile",
@@ -37,8 +37,10 @@ Z_method_questions <- c(
 
 
 if (Z_method == 0) {
-  thresh <- 0.2
+  thresh <- 0
   Z_method_question <- "aggregate"
+  parent_questions <- paste0("crpbi_parent", 1:5, "_y_mean")
+  caregiver_questions <- paste0("crpbi_caregiver", 12:16, "_y_mean") # crpbi_caregiver12_y
   df_withz <- raw_df %>% 
     #select(src_subject_id, all_of(parent_questions), all_of(caregiver_questions)) %>% 
     mutate(across(all_of(parent_questions), 
@@ -48,10 +50,10 @@ if (Z_method == 0) {
     mutate(across(all_of(caregiver_questions),
                   ~ case_when(. >= 2.99 ~ 1, 
                               . < 2.99 ~ 0,
-                              .default = NA))) %>%
+                              .default = NA))) %>% # binarize: if 3, set to 1. If < 3, set to 0. This "3" may be replaced with 3 - \epsilon
     mutate(prop_1_parent = rowMeans(select(., all_of(parent_questions)), na.rm = FALSE),
            prop_1_caregiver = rowMeans(select(., all_of(caregiver_questions)), na.rm = FALSE), 
-           .before = crpbi_parent1_y_mean) %>% 
+           .before = crpbi_parent1_y_mean) %>% # compute proportion of 3s for each row
     mutate(parent_accept = case_when(
       prop_1_parent == 1 & prop_1_caregiver >= 1 - thresh ~ 1,
       prop_1_parent >= 1 - thresh & prop_1_caregiver == 1 ~ 1,

@@ -14,8 +14,16 @@ numCores <- parallel::detectCores()
 doParallel::registerDoParallel(numCores)
 
 Z_method <- "aggregate"
+# "better_worry",
+# "smile",
+# "better_upset",
+# "love",
+# "easy_talk
+# aggregate
 
 df_yz <- read_csv(paste0("../data/list1_YZGW_", Z_method, ".csv"))
+
+df_x <- read_csv(paste0("../data/list1_X_", Z_method, ".csv"))
 
 G <- df_yz$sex_min
 Z <- df_yz$parent_accept
@@ -29,7 +37,8 @@ mu0 <- mean(Y[G == 0])
 
 mean(Z[G == 1]) - mean(Z[G == 0])
 
-
+mu1
+mu0
 obs_disp <- mu1 - mu0
 obs_disp
 mean(Y[G == 1]) - mean(Y[G == 0])
