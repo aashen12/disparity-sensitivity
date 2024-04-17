@@ -6,6 +6,7 @@ library(decompsens)
 library(parallel)
 library(doParallel)
 library(boot)
+library(cobalt)
 library(latex2exp)
 
 source("functions.R")
@@ -81,10 +82,13 @@ df_yz %>% group_by(sex_min) %>%
 
 allow <- TRUE
 
-
-
 w <- decompsens::estimateRMPW(G=G, Z=Z, Y=Y, XA=df_allowable, XN=df_non_allowable,
                                         trim = 0.01, allowable = allow)
+
+w1 <- glm(G ~ 1, data = df_allowable, family = binomial(link = "logit"))$fitted.values / 
+  glm(G ~ ., data = df_allowable, family = binomial(link = "logit"))$fitted.values
+w0 <- glm(1 - G ~ 1, data = df_allowable, family = binomial(link = "logit"))$fitted.values / 
+  glm(1 - G ~ ., data = df_allowable, family = binomial(link = "logit"))$fitted.values
 
 summary(w)
 
@@ -99,7 +103,29 @@ message(paste0("CSV file for Z method ", Z_method, " has been written."))
 
 X_plot <- X_plot <- cbind(model.matrix(~ . -1, data = df_x %>% select(all_of(allowable_covs))),
                           model.matrix(~ . -1, data = df_x %>% select(all_of(non_allowable_covs)))) %>% NAImpute()
-X_stnd <- apply(X_plot, 2, scale)
+X_stnd <- apply(X_plot, 2, scale) %>% data.frame()
+
+
+unweighted_diffs <- lapply(1:ncol(X_stnd), function(i) {
+  tapply(X_stnd[, i], list(G, Z), mean)
+})
+
+
+weighted_diffs <- lapply(1:ncol(X_stnd), function(i) {
+  tapply(X_stnd[, i] * w, list(G, Z), mean)
+})
+
+
+df_balance <- data.frame(
+  X_stnd, G, Z, w
+)
+
+df_balance %>% 
+  group_by(G, Z) %>% 
+  summarise(across(colnames(X_stnd), mean))
+
+
+
 
 pre_weight_G <- colMeans(X_stnd[G == 1, ]) - colMeans(X_stnd[G == 0, ])
 max(abs(pre_weight_G))
@@ -112,67 +138,15 @@ post_weight_G <- colSums(X_stnd[G == 1, ] * w[G == 1]) / sum(w[G == 1]) - colMea
 lovePlot(pre_weight_G, post_weight_G, title = "Covariate Balance wrt Sexual Minority Status")
 
 
-# pre_weight_Z <- colMeans(X_stnd[Z == 1, ]) - colMeans(X_stnd[Z == 0, ])
-# max(abs(pre_weight_Z))
-# 
-# post_weight_Z <- colSums(X_stnd[Z == 1, ] * w[Z == 1] / sum(w[Z == 1])) - colMeans(X_stnd[Z == 0, ])
-# max(abs(post_weight_Z))
-# 
-# loveZ <- lovePlot(pre_weight_Z, post_weight_Z, title = "Covariate Balance wrt Parental Support")
-# loveZ
+pre_weight_Z <- colMeans(X_stnd[Z == 1, ]) - colMeans(X_stnd[Z == 0, ])
+pre_weight_Z <- colSums(X_stnd[Z == 1, ] * w1[Z == 1] / sum(w1[Z == 1])) - 
+  colSums(X_stnd[Z == 0, ] * w0[Z == 0] / sum(w0[Z == 0]))
+max(abs(pre_weight_Z))
 
-# Assess balance in X for the sexual minority group
+post_weight_Z <- colSums(X_stnd[Z == 1, ] * w[Z == 1] / sum(w[Z == 1])) - colMeans(X_stnd[Z == 0, ])
+max(abs(post_weight_Z))
 
-# pre_weight_G1 <- colMeans(X_stnd[G == 1 & Z == 1, ]) - colMeans(X_stnd[G == 1 & Z == 0, ])
-# max(abs(pre_weight_G1))
-# 
-# post_weight_G1 <- colSums(X_stnd[G == 1 & Z == 1, ] * w[G == 1 & Z == 1] / sum(w[G == 1 & Z == 1])) - 
-#   colSums(X_stnd[G == 1 & Z == 0, ] * w[G == 1 & Z == 0] / sum(w[G == 1 & Z == 0]))
-# max(abs(post_weight_G1))
-# 
-# loveG1 <- lovePlot(pre_weight_G1, post_weight_G1, title = "Covariate Balance wrt Parental Support for Sex. Minorities ONLY")
-# loveG1
-# 
-# pre_weight_G0 <- colMeans(X_stnd[G == 0 & Z == 1, ]) - colMeans(X_stnd[G == 0 & Z == 0, ])
-# max(abs(pre_weight_G0))
-# 
-# post_weight_G0 <- colSums(X_stnd[G == 0 & Z == 1, ] * w[G == 0 & Z == 1] / sum(w[G == 0 & Z == 1])) - 
-#   colSums(X_stnd[G == 0 & Z == 0, ] * w[G == 0 & Z == 0] / sum(w[G == 0 & Z == 0]))
-# max(abs(post_weight_G0))
-# 
-# loveG0 <- lovePlot(pre_weight_G0, post_weight_G0, title = "Covariate Balance wrt Parental Support for non sex. minorities")
-# loveG0
-# 
-# pre_weight_Z1 <- colMeans(X_stnd[Z == 1 & G == 1, ]) - colMeans(X_stnd[Z == 1 & G == 0, ])
-# max(abs(pre_weight_Z1))
-# 
-# post_weight_Z1 <- colSums(X_stnd[Z == 1 & G == 1, ] * w[Z == 1 & G == 1] / sum(w[Z == 1 & G == 1])) - 
-#   colSums(X_stnd[Z == 1 & G == 0, ] * w[Z == 1 & G == 0] / sum(w[Z == 1 & G == 0]))
-# max(abs(post_weight_Z1))
-# 
-# loveZ1 <- lovePlot(pre_weight_Z1, post_weight_Z1, title = "Covariate Balance wrt sex min status for treated individuals")
-# loveZ1
-# 
-# pre_weight_Z0 <- colMeans(X_stnd[Z == 0 & G == 1, ]) - colMeans(X_stnd[Z == 0 & G == 0, ])
-# max(abs(pre_weight_Z0))
-# 
-# post_weight_Z0 <- colSums(X_stnd[Z == 0 & G == 1, ] * w[Z == 0 & G == 1] / sum(w[Z == 0 & G == 1])) - 
-#   colSums(X_stnd[Z == 0 & G == 0, ] * w[Z == 0 & G == 0] / sum(w[Z == 0 & G == 0]))
-# max(abs(post_weight_Z0))
-# 
-# loveZ0 <- lovePlot(pre_weight_Z0, post_weight_Z0, title = "Covariate Balance wrt sex min status for control individuals")
-# loveZ0
-# 
-# 
-# pre_weight_subopt <- colMeans(X_stnd[Z == 0 & G == 1, ]) - colMeans(X_stnd[Z == 1 & G == 0, ])
-# 
-# post_weight_subopt <- colSums(X_stnd[Z == 0 & G == 1, ] * w[Z == 0 & G == 1] / sum(w[Z == 0 & G == 1])) - 
-#   colSums(X_stnd[Z == 1 & G == 0, ] * w[Z == 1 & G == 0] / sum(w[Z == 1 & G == 0]))
-# 
-# lovesubopt <- lovePlot(pre_weight_subopt, post_weight_subopt, title = "Covariate Balance for the suboptimal situation")
-# lovesubopt
-
-
-
+loveZ <- lovePlot(pre_weight_Z, post_weight_Z, title = "Covariate Balance wrt Parental Support")
+loveZ
 
 
