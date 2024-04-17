@@ -170,7 +170,7 @@ p_extrema <- out %>%
 p_extrema
 
 
-decompsens::getExtrema(G=G, Y=Y, w=w, gamma = log(1.06), estimand = "red", RD = TRUE, verbose = FALSE)
+decompsens::getExtrema(G=G, Y=Y, w=w, gamma = log(1.12), estimand = "red", RD = TRUE, verbose = FALSE)
 mu1 - mu10
 
 decompsens::getExtrema(G=G, Y=Y, w=w, gamma = log(1.05), estimand = "point", RD = TRUE, verbose = FALSE)
