@@ -7,6 +7,7 @@ library(doParallel)
 library(boot)
 library(latex2exp)
 
+options(na.action='na.pass')
 source("functions.R")
 set.seed(122357)
 
@@ -32,10 +33,10 @@ allowable_covs <- c("age", "sex", "sib_num", "sib_order")
 non_allowable_covs <- setdiff(names(df_x)[!names(df_x) %in% mediators], allowable_covs)
 
 df <- df_allowable <- model.matrix(~ .^2 -1, data = df_x %>% select(all_of(allowable_covs))) %>% 
-  data.frame() %>% NAImpute()
+  data.frame() %>% NAImpute() %>% tibble()
 
 df <- df_non_allowable <- model.matrix(~ .^2 -1, data = df_x %>% select(all_of(non_allowable_covs))) %>% 
-  data.frame() %>% NAImpute()
+  data.frame() %>% NAImpute() %>% tibble()
 
 interact <- FALSE
 
@@ -77,6 +78,14 @@ mean(Y[G == 1]) - mean(Y[G == 0])
 
 mu10 <- weighted.mean(Y[G == 1], w[G == 1])
 
+
+mu1_AS <- lm(Y ~ df_allowable$age + df_allowable$sexF, weights = G)$fitted.values %>% mean()
+mu0_AS <- lm(Y ~ df_allowable$age + df_allowable$sexF, weights = 1-G)$fitted.values %>% mean()
+
+mu1_AS
+mu0_AS
+
+
 mu1
 mu10
 mu0
@@ -98,32 +107,34 @@ residual / obs_disp
 
 
 ## Bootstrap standard errors
-B <- 1000
-resid_boot <- numeric(B)
-allowable <- TRUE
-out <- parallel::mclapply(1:B, function(i) {
-  ind <- sample(1:length(Y), length(Y), replace = TRUE)
-  w_boot <- decompsens::estimateRMPW(G=G[ind], Z=Z[ind], Y=Y[ind], XA=XA_log[ind,], XN=XN_log[ind,],
-                                     trim = 0.01, allowable = TRUE)
-  
-  mu10_boot <- sum(Y[ind][G[ind] == 1] * w_boot[G[ind] == 1]) / sum(w_boot[G[ind] == 1])
-  mu1_boot <- mean(Y[ind][G[ind] == 1])
-  mu0_boot <- mean(Y[ind][G[ind] == 0])
-  resid_boot <- mu10_boot - mu0_boot
-  red_boot <- mu1_boot - mu10_boot
-  list(resid_boot = resid_boot, red_boot = red_boot)
-}, mc.cores = numCores)
-
-out_resid <- unlist(lapply(out, function(x) x[["resid_boot"]]))
-out_red <- unlist(lapply(out, function(x) x[["red_boot"]]))
-
-c(quantile(out_resid, c(0.025, 0.975)), residual)
-
-c(quantile(out_red, c(0.025, 0.975)), reduction)
-
-sd(out_red)
-mean(out_red)
-reduction
+# B <- 1000
+# resid_boot <- numeric(B)
+# allowable <- TRUE
+# out <- parallel::mclapply(1:B, function(i) {
+#   ind <- sample(1:length(Y), length(Y), replace = TRUE)
+#   w_boot <- decompsens::estimateRMPW(G=G[ind], Z=Z[ind], Y=Y[ind], XA=XA_log[ind,], XN=XN_log[ind,],
+#                                      trim = 0.01, allowable = TRUE)
+#   
+#   mu10_boot <- sum(Y[ind][G[ind] == 1] * w_boot[G[ind] == 1]) / sum(w_boot[G[ind] == 1])
+#   mu1_boot <- mean(Y[ind][G[ind] == 1])
+#   mu0_boot <- mean(Y[ind][G[ind] == 0])
+#   resid_boot <- mu10_boot - mu0_boot
+#   red_boot <- mu1_boot - mu10_boot
+#   list(resid_boot = resid_boot, red_boot = red_boot)
+# }, mc.cores = numCores)
+# 
+# out_resid <- unlist(lapply(out, function(x) x[["resid_boot"]]))
+# out_red <- unlist(lapply(out, function(x) x[["red_boot"]]))
+# 
+# quantile(out_resid, c(0.025, 0.975))
+# c(2*residual - quantile(out_resid, c(0.975, 0.025)), residual) # pivot bootstrap CI
+# 
+# quantile(out_red, c(0.025, 0.975))
+# c(2*reduction - quantile(out_red, c(0.975, 0.025)), reduction)
+# 
+# sd(out_red)
+# mean(out_red)
+# reduction
 
 
 lam <- 5
@@ -177,12 +188,12 @@ decompsens::getExtrema(G=G, Y=Y, w=w, gamma = log(1.05), estimand = "point", RD 
 mu1
 
 num_cov_lbl <- 8
-
+estimand <- "resid"
 psize <- 6
 
-XA <- model.matrix(~ . -1, data = df_x %>% select(all_of(allowable_covs))) %>% NAImpute()
+XA <- model.matrix(~ .^2 -1, data = df_x %>% select(all_of(allowable_covs))) %>% NAImpute()
 XA <- XA[, !grepl(":.*NA$", colnames(XA))]
-XN <- model.matrix(~ . -1, data = df_x %>% select(all_of(non_allowable_covs))) %>% NAImpute()
+XN <- model.matrix(~ .^2 -1, data = df_x %>% select(all_of(non_allowable_covs))) %>% NAImpute()
 XN <- XN[, !grepl(":.*NA$", colnames(XN))]
 
 generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
@@ -218,26 +229,72 @@ generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
   
   print(paste0("Lambda: ", Lam))
   
-  bounds <- decompsens::getBiasBounds(G, Z, XA, XN, Y, Lambda = Lam)
+  bounds <- decompsens::getBiasBounds(G, Z, XA, XN, Y, w, mu10, Lambda = Lam, trim = 0.01, allowable = TRUE)
   
   # even if we care about red or res, we use point bc the lambda already takes
   # into account whether we care about red or res
   
   # return bounds and mu_10_hat
-  amplification <- decompsens::informalAmplify(G, Z, XA, XN, Y, Lambda = Lam)
+  #amplification <- decompsens::informalAmplify(G, Z, XA, XN, Y, w, mu_10=mu10, Lambda = Lam)
+  
+  #bounds <- getExtrema(G=G, Y=Y, w=w, gamma = log(Lam), estimand = "point", RD = TRUE, verbose = FALSE)
+  maxbias <- max(abs(bounds)) # max{|inf mu_10^h - mu_10|, |sup mu_10^h - mu_10|}
+  message("Max bias: ", round(maxbias, 3))
+  X <- cbind(XA, XN)
+  # standardize X
+  X_stnd <- apply(X, MARGIN = 2, FUN = function(x) {(x - mean(x))/sd(x)})
+  
+  # standardize X for group G = 1
+  X_G1 <- X[G == 1, ] # [, -1] for intercept
+  X_G1_stnd <- apply(X_G1, MARGIN = 2, FUN = function(x) {(x - mean(x))/sd(x)})
+  
+  ## Compute \beta_u ##
+  mod_matrix_y <- data.frame(y = Y[G==1], model.matrix(~ . - 1, data = data.frame(X_G1_stnd))) %>% select(-sexM)
+  coeffs <- lm(y ~ ., data = mod_matrix_y)$coef[-1]
+  max_betau <- max(abs(coeffs), na.rm = TRUE)
+  
+  ## Compute standardized imbalance in U: \delta_u ##
+  
+  ZG1 <- Z[G == 1]
+  
+  ## Imbalance before weighting
+  imbal_stnd <- colMeans(X_G1_stnd[ZG1 == 1, ]) - colMeans(X_G1_stnd[ZG1 == 0, ])
+  max_imbal_stnd <- max(abs(imbal_stnd), na.rm = TRUE)
+  
+  # Post-weighting imbalance
+  wg1 <- w[G == 1]
+  Xw_stnd <- apply(X_G1_stnd, MARGIN = 2, FUN = function(x) {x * wg1 / sum(wg1)})
+  
+  imbal_stnd_weight <- colSums(Xw_stnd[ZG1 == 1, ]) - colSums(Xw_stnd[ZG1 == 0, ]) # sum is reweighted
+  max_imbal_stnd_wt <- max(abs(imbal_stnd_weight), na.rm = TRUE)
+  
+  # Get coordinates for strongest observed covariates to plot
+  coeff_df <- data.frame(
+    covar = gsub("X_stnd[G == 1, ]", "", names(coeffs)),
+    coeff = abs(as.numeric(coeffs)))
+  
+  # get imbal
+  imbal_df <- data.frame(
+    covar = names(imbal_stnd),
+    imbal = abs(as.numeric(imbal_stnd)),
+    imbal_wt = abs(as.numeric(imbal_stnd_weight)))
+  
+  # merge coefficients and imbalance, arrange from largest to smallest by imbal * beta_u
+  strongest_cov_df <- dplyr::inner_join(coeff_df, imbal_df, by = "covar") %>%
+    dplyr::arrange(desc(coeff*imbal)) %>% drop_na()
   
   strongest_cov_df <- amplification[[1]] %>% drop_na()
   max_imbal_stnd <- amplification$max_imbal_stnd
   max_betau_01 <- amplification$max_beta
 
-  maxbias <- max(abs(bounds[[1]]))
+  maxbias <- max(abs(bounds))
   
   max_betau_01 <- max(strongest_cov_df$coeff)
   max_imbal <- max(strongest_cov_df$imbal)
   
   if (estimand == "residual") {
     beta <- seq(min(strongest_cov_df$coeff) - 0.2, max(strongest_cov_df$coeff) + 0.2, by = 0.01)
-    imbalance <- seq(0.001, max(strongest_cov_df$imbal) + 0.2, by = 0.005)
+    imbalance <- seq(0.01, max(strongest_cov_df$imbal) + 0.2, by = 0.005)
   } else {
     beta <- seq(min(strongest_cov_df$coeff) - 0.2, max(strongest_cov_df$coeff) + 0.2, by = 0.01)
     imbalance <- seq(0.001, max(strongest_cov_df$imbal) + 0.2, by = 0.005)
@@ -284,7 +341,7 @@ generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
   p1
   
   strongest_cov_df_long <- strongest_cov_df %>% 
-    pivot_longer(cols = c("imbal", "imbal_wt"), names_to = "imbal_type", values_to = "imbal_val") 
+    pivot_longer(cols = c("imbal", "imbal_wt"), names_to = "imbal_type", values_to = "imbal_val") %>% filter(imbal_type == "imbal")
   
   num_cov <- min(nrow(strongest_cov_df), num_cov_lbl * 2)
   p1_full <- p1 + geom_point(data = strongest_cov_df_long, 
@@ -297,8 +354,6 @@ generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
   
   hull <- strongest_cov_df %>%
     slice(chull(coeff, imbal))
-  
-  
 
   p1_full_unscaled <- p1_full + 
     ggrepel::geom_label_repel(data = strongest_cov_df[1:num_cov_lbl,], 

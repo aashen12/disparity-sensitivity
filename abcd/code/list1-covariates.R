@@ -48,11 +48,11 @@ allowable_covs <- c("age", "sex", "sib_num", "sib_order")
 #allowable_covs <- c("age", "sex", "sib_num", "sib_order", "income", "adi")
 non_allowable_covs <- setdiff(names(df_x)[!names(df_x) %in% mediators], allowable_covs)
 
-df <- df_allowable <- model.matrix(~ .^2 -1, data = df_x %>% select(all_of(allowable_covs))) %>% 
-  data.frame() %>% NAImpute()
+df_allowable <- model.matrix(~ .^2 -1, data = df_x %>% select(all_of(allowable_covs))) %>% 
+  data.frame() %>% NAImpute() %>% tibble()
 
-df <- df_non_allowable <- model.matrix(~ .^2 -1, data = df_x %>% select(all_of(non_allowable_covs))) %>% 
-  data.frame() %>% NAImpute()
+df_non_allowable <- model.matrix(~ .^2 -1, data = df_x %>% select(all_of(non_allowable_covs))) %>% 
+  data.frame() %>% NAImpute() %>% tibble()
 
 if (interact == TRUE) {
   XA_log <- create_model_matrix(df_allowable)
