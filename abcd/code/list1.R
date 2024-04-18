@@ -69,11 +69,11 @@ obs_disp <- mu1 - mu0
 obs_disp
 mean(Y[G == 1]) - mean(Y[G == 0])
 
-# sd_obs_disp <- sqrt(var(Y[G == 1]) / sum(G == 1) + var(Y[G == 0]) / sum(G == 0))
+sd_obs_disp <- sqrt(var(Y[G == 1]) / sum(G == 1) + var(Y[G == 0]) / sum(G == 0))
 # 
-# # construct 95% CI for obs_disp
-# ci <- c(obs_disp - qnorm(0.975) * sd_obs_disp, obs_disp + qnorm(0.975) * sd_obs_disp)
-# ci
+# construct 95% CI for obs_disp
+ci <- c(obs_disp - qnorm(0.975) * sd_obs_disp, obs_disp + qnorm(0.975) * sd_obs_disp)
+ci
 
 
 mu10 <- weighted.mean(Y[G == 1], w[G == 1])
@@ -106,35 +106,35 @@ mu10/mu0
 residual / obs_disp
 
 
-## Bootstrap standard errors
-# B <- 1000
-# resid_boot <- numeric(B)
-# allowable <- TRUE
-# out <- parallel::mclapply(1:B, function(i) {
-#   ind <- sample(1:length(Y), length(Y), replace = TRUE)
-#   w_boot <- decompsens::estimateRMPW(G=G[ind], Z=Z[ind], Y=Y[ind], XA=XA_log[ind,], XN=XN_log[ind,],
-#                                      trim = 0.01, allowable = TRUE)
-#   
-#   mu10_boot <- sum(Y[ind][G[ind] == 1] * w_boot[G[ind] == 1]) / sum(w_boot[G[ind] == 1])
-#   mu1_boot <- mean(Y[ind][G[ind] == 1])
-#   mu0_boot <- mean(Y[ind][G[ind] == 0])
-#   resid_boot <- mu10_boot - mu0_boot
-#   red_boot <- mu1_boot - mu10_boot
-#   list(resid_boot = resid_boot, red_boot = red_boot)
-# }, mc.cores = numCores)
-# 
-# out_resid <- unlist(lapply(out, function(x) x[["resid_boot"]]))
-# out_red <- unlist(lapply(out, function(x) x[["red_boot"]]))
-# 
-# quantile(out_resid, c(0.025, 0.975))
-# c(2*residual - quantile(out_resid, c(0.975, 0.025)), residual) # pivot bootstrap CI
-# 
-# quantile(out_red, c(0.025, 0.975))
-# c(2*reduction - quantile(out_red, c(0.975, 0.025)), reduction)
-# 
-# sd(out_red)
-# mean(out_red)
-# reduction
+# Bootstrap standard errors
+B <- 1000
+resid_boot <- numeric(B)
+allowable <- TRUE
+out <- parallel::mclapply(1:B, function(i) {
+  ind <- sample(1:length(Y), length(Y), replace = TRUE)
+  w_boot <- decompsens::estimateRMPW(G=G[ind], Z=Z[ind], Y=Y[ind], XA=XA_log[ind,], XN=XN_log[ind,],
+                                     trim = 0.01, allowable = TRUE)
+
+  mu10_boot <- sum(Y[ind][G[ind] == 1] * w_boot[G[ind] == 1]) / sum(w_boot[G[ind] == 1])
+  mu1_boot <- mean(Y[ind][G[ind] == 1])
+  mu0_boot <- mean(Y[ind][G[ind] == 0])
+  resid_boot <- mu10_boot - mu0_boot
+  red_boot <- mu1_boot - mu10_boot
+  list(resid_boot = resid_boot, red_boot = red_boot)
+}, mc.cores = numCores)
+
+out_resid <- unlist(lapply(out, function(x) x[["resid_boot"]]))
+out_red <- unlist(lapply(out, function(x) x[["red_boot"]]))
+
+quantile(out_resid, c(0.025, 0.975))
+c(2*residual - quantile(out_resid, c(0.975, 0.025)), residual) # pivot bootstrap CI
+
+quantile(out_red, c(0.025, 0.975))
+c(2*reduction - quantile(out_red, c(0.975, 0.025)), reduction)
+
+sd(out_red)
+mean(out_red)
+reduction
 
 
 lam <- 5
@@ -187,18 +187,18 @@ mu1 - mu10
 decompsens::getExtrema(G=G, Y=Y, w=w, gamma = log(1.05), estimand = "point", RD = TRUE, verbose = FALSE)
 mu1
 
-num_cov_lbl <- 8
-estimand <- "resid"
-psize <- 6
+# num_cov_lbl <- 8
+# estimand <- "resid"
+# psize <- 6
 
-XA <- model.matrix(~ .^2 -1, data = df_x %>% select(all_of(allowable_covs))) %>% NAImpute()
+XA <- model.matrix(~ . -1, data = df_x %>% select(all_of(allowable_covs))) %>% NAImpute()
 XA <- XA[, !grepl(":.*NA$", colnames(XA))]
-XN <- model.matrix(~ .^2 -1, data = df_x %>% select(all_of(non_allowable_covs))) %>% NAImpute()
+XN <- model.matrix(~ . -1, data = df_x %>% select(all_of(non_allowable_covs))) %>% NAImpute()
 XN <- XN[, !grepl(":.*NA$", colnames(XN))]
 
 generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
   
-  if (estimand == "resid") {
+  if (estimand == "resid" | estimand == "residual") {
     estimand <- "residual"
     seq <- seq(1, 3, by = 0.01)
     title <- "Disp. RESIDUAL (ABCD)"
@@ -207,6 +207,7 @@ generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
     seq <- seq(1, 2, by = 0.01)
     title <- "Disp. REDUCTION (ABCD)"
   }
+  print(title)
   
   out <- sapply(seq, function(i) {
     decompsens::getExtrema(G=G, Y=Y, w=w, gamma = log(i), estimand = estimand, RD = TRUE, verbose = FALSE)
@@ -235,53 +236,8 @@ generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
   # into account whether we care about red or res
   
   # return bounds and mu_10_hat
-  #amplification <- decompsens::informalAmplify(G, Z, XA, XN, Y, w, mu_10=mu10, Lambda = Lam)
+  amplification <- decompsens::informalAmplify(G, Z, XA, XN, Y, w, mu_10=mu10, Lambda = Lam)
   
-  #bounds <- getExtrema(G=G, Y=Y, w=w, gamma = log(Lam), estimand = "point", RD = TRUE, verbose = FALSE)
-  maxbias <- max(abs(bounds)) # max{|inf mu_10^h - mu_10|, |sup mu_10^h - mu_10|}
-  message("Max bias: ", round(maxbias, 3))
-  X <- cbind(XA, XN)
-  # standardize X
-  X_stnd <- apply(X, MARGIN = 2, FUN = function(x) {(x - mean(x))/sd(x)})
-  
-  # standardize X for group G = 1
-  X_G1 <- X[G == 1, ] # [, -1] for intercept
-  X_G1_stnd <- apply(X_G1, MARGIN = 2, FUN = function(x) {(x - mean(x))/sd(x)})
-  
-  ## Compute \beta_u ##
-  mod_matrix_y <- data.frame(y = Y[G==1], model.matrix(~ . - 1, data = data.frame(X_G1_stnd))) %>% select(-sexM)
-  coeffs <- lm(y ~ ., data = mod_matrix_y)$coef[-1]
-  max_betau <- max(abs(coeffs), na.rm = TRUE)
-  
-  ## Compute standardized imbalance in U: \delta_u ##
-  
-  ZG1 <- Z[G == 1]
-  
-  ## Imbalance before weighting
-  imbal_stnd <- colMeans(X_G1_stnd[ZG1 == 1, ]) - colMeans(X_G1_stnd[ZG1 == 0, ])
-  max_imbal_stnd <- max(abs(imbal_stnd), na.rm = TRUE)
-  
-  # Post-weighting imbalance
-  wg1 <- w[G == 1]
-  Xw_stnd <- apply(X_G1_stnd, MARGIN = 2, FUN = function(x) {x * wg1 / sum(wg1)})
-  
-  imbal_stnd_weight <- colSums(Xw_stnd[ZG1 == 1, ]) - colSums(Xw_stnd[ZG1 == 0, ]) # sum is reweighted
-  max_imbal_stnd_wt <- max(abs(imbal_stnd_weight), na.rm = TRUE)
-  
-  # Get coordinates for strongest observed covariates to plot
-  coeff_df <- data.frame(
-    covar = gsub("X_stnd[G == 1, ]", "", names(coeffs)),
-    coeff = abs(as.numeric(coeffs)))
-  
-  # get imbal
-  imbal_df <- data.frame(
-    covar = names(imbal_stnd),
-    imbal = abs(as.numeric(imbal_stnd)),
-    imbal_wt = abs(as.numeric(imbal_stnd_weight)))
-  
-  # merge coefficients and imbalance, arrange from largest to smallest by imbal * beta_u
-  strongest_cov_df <- dplyr::inner_join(coeff_df, imbal_df, by = "covar") %>%
-    dplyr::arrange(desc(coeff*imbal)) %>% drop_na()
   
   strongest_cov_df <- amplification[[1]] %>% drop_na()
   max_imbal_stnd <- amplification$max_imbal_stnd
@@ -341,10 +297,10 @@ generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
   p1
   
   strongest_cov_df_long <- strongest_cov_df %>% 
-    pivot_longer(cols = c("imbal", "imbal_wt"), names_to = "imbal_type", values_to = "imbal_val") %>% filter(imbal_type == "imbal")
+    pivot_longer(cols = c("imbal", "imbal_wt"), names_to = "imbal_type", values_to = "imbal_val") #%>% filter(imbal_type == "imbal")
   
   num_cov <- min(nrow(strongest_cov_df), num_cov_lbl * 2)
-  p1_full <- p1 + geom_point(data = strongest_cov_df_long, 
+  p1_full <- p1 + geom_point(data = strongest_cov_df_long[1:num_cov,], 
                              aes(x = imbal_val, y = coeff, z = 0, color = imbal_type), size = psize) + 
     scale_color_manual(labels = c("imbal" = "Pre-wt", "imbal_wt" = "Post-wt"),
                        values = c("imbal" = "red", "imbal_wt" = "forestgreen"))
@@ -364,26 +320,40 @@ generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
     #                           aes(x = imbal_wt, y = coeff, z = 0, label = covar),
     #                           nudge_y = 0.005, nudge_x = 0.005, label.padding = 0.1,
     #                           point.padding = 0.1) + 
-    geom_polygon(data = hull, aes(x = imbal, y = coeff, z = 0), alpha = 0.3, fill = "red") + 
+    #geom_polygon(data = hull, aes(x = imbal, y = coeff, z = 0), alpha = 0.3, fill = "red") + 
     theme_bw(base_size = 20) + 
     theme(plot.title = element_text(hjust = 0.5, face = "bold")) + 
     labs(x = TeX("absolute standardized imbalance in $\\U$"), y = TeX("absolute $\\beta_u$"),
          title = paste0(title), color = c("Imbalance")) + 
     theme(legend.position = "bottom") + 
-    geom_hline(yintercept = 0, color = "gray55") + 
-    geom_text(x = 0.85 - 0.1, y = 0.365,
-              label = TeX(paste0("$\\Lambda^{*} = ", Lam)), 
-              size = 8, color = "black") + 
-    geom_text(x = 0.85 - 0.1, y = 0.365 - 0.04,
-              label = paste0("Bias: ", round(maxbias, 3)), size = 8, color = "black")
+    #ylim(0, 1) + 
+    geom_hline(yintercept = 0, color = "gray55") + scale_y_continuous(limits = c(0, NA))
+  #+ xlim(0, 1) + ylim(0, 1)
+    #+ scale_y_continuous(limits = c(0, NA))
   
-  p1_full_unscaled
+  if (estimand == "reduction") {
+    p1_full_unscaled + 
+      geom_text(x = 0.9, y = 0.27,
+                label = TeX(paste0("$\\Lambda^{*} = ", Lam)),
+                size = 8, color = "black") +
+      geom_text(x = 0.9, y = 0.245,
+                label = paste0("Bias: ", round(maxbias, 3)), size = 8, color = "black") 
+  } else {
+    p1_full_unscaled + 
+      geom_text(x = 0.92, y = 0.22,
+                label = TeX(paste0("$\\Lambda^{*} = ", Lam)),
+                size = 8, color = "black") +
+      geom_text(x = 0.92, y = 0.195,
+                label = paste0("Bias: ", round(maxbias, 3)), size = 8, color = "black") 
+  }
 }
 
-resid_plot <- generatePlot(num_cov_lbl = 3, psize = 5, estimand = "resid")
-red_plot <- generatePlot(num_cov_lbl = 3, psize = 5, estimand = "red")
+resid_plot <- generatePlot(num_cov_lbl = 5, psize = 5, estimand = "resid")
+red_plot <- generatePlot(num_cov_lbl = 5, psize = 5, estimand = "red")
 
-resid_plot
+
 red_plot
+resid_plot
+
 
 
