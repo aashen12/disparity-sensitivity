@@ -25,14 +25,17 @@ Z_method <- "worry_upset"
 # aggregate
 # worry_upset
 
+outcome <- "ideation" # ideation or attempt
+
+
 interact <- FALSE
 
-df_x <- read_csv(paste0("../data/list1_X_", Z_method, ".csv"))
-df_yz <- read_csv(paste0("../data/list1_YZG_", Z_method, ".csv"))
+df_x <- read_csv(paste0("../data/list1_X_", Z_method, "_", outcome, ".csv"))
+df_yz <- read_csv(paste0("../data/list1_YZG_", Z_method, "_", outcome, ".csv"))
 
 G <- df_yz$sex_min
 Z <- df_yz$parent_accept
-Y <- df_yz$ideation
+Y <- df_yz$suicide
 
 table(Z)
 table(G)
@@ -83,7 +86,8 @@ df_yz %>% group_by(sex_min) %>%
 allow <- TRUE
 
 w <- decompsens::estimateRMPW(G=G, Z=Z, Y=Y, XA=df_allowable, XN=df_non_allowable,
-                                        trim = 0.01, allowable = allow)
+                              trim = switch(outcome, "ideation" = 0.01, "attempt" = 0.05), 
+                              allowable = allow)
 
 w1 <- glm(G ~ 1, data = df_allowable, family = binomial(link = "logit"))$fitted.values / 
   glm(G ~ ., data = df_allowable, family = binomial(link = "logit"))$fitted.values
@@ -93,11 +97,9 @@ w0 <- glm(1 - G ~ 1, data = df_allowable, family = binomial(link = "logit"))$fit
 summary(w)
 
 df_yz <- df_yz %>% mutate(w_rmpw = w)
-write_csv(df_yz, paste0("../data/list1_YZGW_", Z_method, ".csv"))
+write_csv(df_yz, paste0("../data/list1_YZGW_", Z_method, "_", outcome, ".csv"))
 
-message(paste0("CSV file for Z method ", Z_method, " has been written."))
-
-# assess balance in X
+message(paste0("CSV file for Z method ", Z_method, " and outcome ", outcome, " has been written."))
 
 
 
@@ -130,9 +132,9 @@ df_balance %>%
 pre_weight_G <- colMeans(X_stnd[G == 1, ]) - colMeans(X_stnd[G == 0, ])
 max(abs(pre_weight_G))
 
-post_weight_G <- colSums(X_stnd[G == 1, ] * w[G == 1]) / sum(w[G == 1]) - 
-  colSums(X_stnd[G == 0, ] * w[G == 0])  / sum(w[G == 0])
-lovePlot(pre_weight_G, post_weight_G, title = "Covariate Balance wrt Sexual Minority Status")
+# post_weight_G <- colSums(X_stnd[G == 1, ] * w[G == 1]) / sum(w[G == 1]) - 
+#   colSums(X_stnd[G == 0, ] * w[G == 0])  / sum(w[G == 0])
+# lovePlot(pre_weight_G, post_weight_G, title = "Covariate Balance wrt Sexual Minority Status")
 
 post_weight_G <- colSums(X_stnd[G == 1, ] * w[G == 1]) / sum(w[G == 1]) - colMeans(X_stnd[G == 1, ])
 lovePlot(pre_weight_G, post_weight_G, title = "Covariate Balance between SM and weighted SM")
@@ -146,7 +148,13 @@ max(abs(pre_weight_Z))
 post_weight_Z <- colSums(X_stnd[Z == 1, ] * w[Z == 1] / sum(w[Z == 1])) - colMeans(X_stnd[Z == 0, ])
 max(abs(post_weight_Z))
 
-loveZ <- lovePlot(pre_weight_Z, post_weight_Z, title = "Covariate Balance wrt Parental Support")
+XG1 <- X_stnd[G == 1, ]
+XG1_w <- apply(XG1, 2, function(x) x * w[G == 1] / sum(w[G == 1]))
+ZG1 <- Z[G == 1]
+
+post_weight_Z <- colSums(XG1_w[ZG1 == 1, ]) - colSums(XG1_w[ZG1 == 0, ])
+
+loveZ <- lovePlot(pre_weight_Z, post_weight_Z, title = "Covariate Balance wrt Parental Support\n within SM group")
 loveZ
 
 

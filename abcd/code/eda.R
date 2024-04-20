@@ -17,6 +17,9 @@ Z_method_questions <- c(
   "easy_talk"
 )
 
+outcome <- "attempt" # ideation or attempt
+
+
 ##################################################################
 ##           Parental and caregiver acceptance scores           ##
 ##################################################################
@@ -110,10 +113,13 @@ Z_var <- c("parent_accept" = "parent_accept")
 # NDAR_INVXMJE5DN0
 
 
+if (outcome == "ideation") {
+  Y_var <- c("suicide" = "SI_y_ever") # ideation
+} else {
+  Y_var <- c("suicide" = "SA_y_ever") # attempt
+}
 
 
-Y_var <- c("ideation" = "SI_y_ever") # ideation
-#Y_var <- c("attempt" = "SA_y_ever") # attempt
 
 G_var <- c("sex_min" = "SM_inclusive_y_br_ever")
 
@@ -147,21 +153,21 @@ df1 <- df_withz %>%
   select(src_subject_id, all_of(list1)) %>%
   mutate(sib_order = case_when(sib_num == 0 ~ 1,
                                .default = sib_order)) %>% 
-  drop_na(sex_min, ideation, parent_accept) #%>% drop_na()
+  drop_na(sex_min, suicide, parent_accept) #%>% drop_na()
 
 
 df1 %>% group_by(sex_min) %>% 
-  summarise(n = n(), mean(ideation), mean(parent_accept))
+  summarise(n = n(), mean(suicide), mean(parent_accept))
 
 
 df_x1 <- df1 %>% select(src_subject_id, all_of(names(c(demographics, X_list1))))
-write_csv(df_x1, paste0("../data/list1_X_", Z_method_question, ".csv"))
+write_csv(df_x1, paste0("../data/list1_X_", Z_method_question, "_", outcome, ".csv"))
 
 
 df_yz1 <- df1 %>% select(src_subject_id, all_of(c(names(Y_var), names(Z_var), names(G_var), "peer_victimization")))
-write_csv(df_yz1, paste0("../data/list1_YZG_", Z_method_question, ".csv"))
+write_csv(df_yz1, paste0("../data/list1_YZG_", Z_method_question, "_", outcome, ".csv"))
 
-message(paste0("Wrote df for Z method: ", Z_method_question))
+message(paste0("Wrote df for Z method: ", Z_method_question, " and outcome: ", outcome))
 
 Y <- df1$ideation
 G <- df1$sex_min

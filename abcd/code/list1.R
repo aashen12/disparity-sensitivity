@@ -24,9 +24,11 @@ Z_method <- "worry_upset"
 # aggregate
 # worry_upset
 
-df_yz <- read_csv(paste0("../data/list1_YZGW_", Z_method, ".csv"))
+outcome <- "ideation" # ideation or attempt
 
-df_x <- read_csv(paste0("../data/list1_X_", Z_method, ".csv"))
+df_x <- read_csv(paste0("../data/list1_X_", Z_method, "_", outcome, ".csv"))
+df_yz <- read_csv(paste0("../data/list1_YZGW_", Z_method, "_", outcome, ".csv"))
+
 mediators <- c("src_subject_id")
 allowable_covs <- c("age", "sex", "sib_num", "sib_order")
 #allowable_covs <- c("age", "sex", "sib_num", "sib_order", "income", "adi")
@@ -53,7 +55,7 @@ if (interact == TRUE) {
 
 G <- df_yz$sex_min
 Z <- df_yz$parent_accept
-Y <- df_yz$ideation
+Y <- df_yz$suicide
 w <- df_yz$w_rmpw
 
 
@@ -62,6 +64,9 @@ mu1 <- mean(Y[G == 1])
 mu0 <- mean(Y[G == 0])
 
 mean(Z[G == 1]) - mean(Z[G == 0])
+
+mean(Z[G == 1]) / mean(Z[G == 0])
+
 
 mu1
 mu0
@@ -201,11 +206,11 @@ generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
   if (estimand == "resid" | estimand == "residual") {
     estimand <- "residual"
     seq <- seq(1, 3, by = 0.01)
-    title <- "Disp. RESIDUAL (ABCD)"
+    title <- paste0("Disp. RESIDUAL for outcome ", toupper(outcome))
   } else {
     estimand <- "reduction"
     seq <- seq(1, 2, by = 0.01)
-    title <- "Disp. REDUCTION (ABCD)"
+    title <- paste0("Disp. REDUCTION for outcome ", toupper(outcome))
   }
   print(title)
   
@@ -348,8 +353,8 @@ generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
   }
 }
 
-resid_plot <- generatePlot(num_cov_lbl = 5, psize = 5, estimand = "resid")
-red_plot <- generatePlot(num_cov_lbl = 5, psize = 5, estimand = "red")
+red_plot <- generatePlot(num_cov_lbl = 3, psize = 5, estimand = "red")
+resid_plot <- generatePlot(num_cov_lbl = 3, psize = 5, estimand = "resid")
 
 
 red_plot
