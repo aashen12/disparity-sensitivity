@@ -17,7 +17,7 @@ Z_method_questions <- c(
   "easy_talk"
 )
 
-outcome <- "attempt" # ideation or attempt
+outcome <- "ideation" # ideation or attempt
 
 
 ##################################################################
