@@ -24,7 +24,7 @@ Z_method <- "worry_upset"
 # aggregate
 # worry_upset
 
-outcome <- "attempt" # ideation or attempt
+outcome <- "ideation" # ideation or attempt
 
 df_x <- read_csv(paste0("../data/list1_X_", Z_method, "_", outcome, ".csv"))
 df_yz <- read_csv(paste0("../data/list1_YZGW_", Z_method, "_", outcome, ".csv"))
@@ -57,7 +57,8 @@ G <- df_yz$sex_min
 Z <- df_yz$parent_accept
 Y <- df_yz$suicide
 w <- df_yz$w_rmpw
-
+e1 <- df_yz$e1
+e0 <- df_yz$e0
 
 # OUTCOMES
 mu1 <- mean(Y[G == 1])
@@ -112,33 +113,33 @@ residual / obs_disp
 
 
 # Bootstrap standard errors
-B <- 1000
-resid_boot <- numeric(B)
-allowable <- TRUE
-out <- parallel::mclapply(1:B, function(i) {
-  ind <- sample(1:length(Y), length(Y), replace = TRUE)
-  w_boot <- decompsens::estimateRMPW(G=G[ind], Z=Z[ind], Y=Y[ind], XA=XA_log[ind,], XN=XN_log[ind,],
-                                     trim = 0.01, allowable = TRUE)
-
-  mu10_boot <- sum(Y[ind][G[ind] == 1] * w_boot[G[ind] == 1]) / sum(w_boot[G[ind] == 1])
-  mu1_boot <- mean(Y[ind][G[ind] == 1])
-  mu0_boot <- mean(Y[ind][G[ind] == 0])
-  resid_boot <- mu10_boot - mu0_boot
-  red_boot <- mu1_boot - mu10_boot
-  list(resid_boot = resid_boot, red_boot = red_boot)
-}, mc.cores = numCores)
-
-out_resid <- unlist(lapply(out, function(x) x[["resid_boot"]]))
-out_red <- unlist(lapply(out, function(x) x[["red_boot"]]))
-
-quantile(out_resid, c(0.025, 0.975))
-c(2*residual - quantile(out_resid, c(0.975, 0.025)), residual) # pivot bootstrap CI
-
-quantile(out_red, c(0.025, 0.975))
-c(2*reduction - quantile(out_red, c(0.975, 0.025)), reduction)
-
-sd(out_red)
-mean(out_red)
+# B <- 1000
+# resid_boot <- numeric(B)
+# allowable <- TRUE
+# out <- parallel::mclapply(1:B, function(i) {
+#   ind <- sample(1:length(Y), length(Y), replace = TRUE)
+#   w_boot <- decompsens::estimateRMPW(G=G[ind], Z=Z[ind], Y=Y[ind], XA=XA_log[ind,], XN=XN_log[ind,],
+#                                      trim = 0.01, allowable = TRUE)
+# 
+#   mu10_boot <- sum(Y[ind][G[ind] == 1] * w_boot[G[ind] == 1]) / sum(w_boot[G[ind] == 1])
+#   mu1_boot <- mean(Y[ind][G[ind] == 1])
+#   mu0_boot <- mean(Y[ind][G[ind] == 0])
+#   resid_boot <- mu10_boot - mu0_boot
+#   red_boot <- mu1_boot - mu10_boot
+#   list(resid_boot = resid_boot, red_boot = red_boot)
+# }, mc.cores = numCores)
+# 
+# out_resid <- unlist(lapply(out, function(x) x[["resid_boot"]]))
+# out_red <- unlist(lapply(out, function(x) x[["red_boot"]]))
+# 
+# quantile(out_resid, c(0.025, 0.975))
+# c(2*residual - quantile(out_resid, c(0.975, 0.025)), residual) # pivot bootstrap CI
+# 
+# quantile(out_red, c(0.025, 0.975))
+# c(2*reduction - quantile(out_red, c(0.975, 0.025)), reduction)
+# 
+# sd(out_red)
+# mean(out_red)
 reduction
 
 
@@ -192,9 +193,9 @@ mu1 - mu10
 decompsens::getExtrema(G=G, Y=Y, w=w, gamma = log(1.05), estimand = "point", RD = TRUE, verbose = FALSE)
 mu1
 
-# num_cov_lbl <- 8
-# estimand <- "resid"
-# psize <- 6
+num_cov_lbl <- 8
+estimand <- "resid"
+psize <- 6
 
 XA <- model.matrix(~ . -1, data = df_x %>% select(all_of(allowable_covs))) %>% NAImpute()
 XA <- XA[, !grepl(":.*NA$", colnames(XA))]
@@ -235,13 +236,12 @@ generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
   
   print(paste0("Lambda: ", Lam))
   
-  bounds <- decompsens::getBiasBounds(G, Z, XA, XN, Y, w, mu10, Lambda = Lam, trim = 0.01, allowable = TRUE)
   
   # even if we care about red or res, we use point bc the lambda already takes
   # into account whether we care about red or res
   
   # return bounds and mu_10_hat
-  amplification <- decompsens::informalAmplify(G, Z, XA, XN, Y, w, mu_10=mu10, Lambda = Lam)
+  amplification <- decompsens::decompAmplify(G, Z, XA, XN, Y, w, mu_10=mu10, Lambda = Lam)
   
   
   strongest_cov_df <- amplification[[1]] %>% drop_na()
@@ -305,7 +305,7 @@ generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
     pivot_longer(cols = c("imbal", "imbal_wt"), names_to = "imbal_type", values_to = "imbal_val") #%>% filter(imbal_type == "imbal")
   
   num_cov <- min(nrow(strongest_cov_df), num_cov_lbl * 2)
-  p1_full <- p1 + geom_point(data = strongest_cov_df_long[1:num_cov,], 
+  p1_full <- p1 + geom_point(data = strongest_cov_df_long %>% filter(covar %in% non_allowable_covs) %>% slice(1:num_cov), 
                              aes(x = imbal_val, y = coeff, z = 0, color = imbal_type), size = psize) + 
     scale_color_manual(labels = c("imbal" = "Pre-wt", "imbal_wt" = "Post-wt"),
                        values = c("imbal" = "red", "imbal_wt" = "forestgreen"))

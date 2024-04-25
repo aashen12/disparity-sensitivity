@@ -25,7 +25,7 @@ Z_method <- "worry_upset"
 # aggregate
 # worry_upset
 
-outcome <- "attempt" # ideation or attempt
+outcome <- "ideation" # ideation or attempt
 
 
 interact <- FALSE
@@ -85,9 +85,14 @@ df_yz %>% group_by(sex_min) %>%
 
 allow <- TRUE
 
-w <- decompsens::estimateRMPW(G=G, Z=Z, Y=Y, XA=df_allowable, XN=df_non_allowable,
+weight_object <- decompsens::estimateRMPW(G=G, Z=Z, Y=Y, XA=df_allowable, XN=df_non_allowable,
                               trim = switch(outcome, "ideation" = 0.01, "attempt" = 0.05), 
                               allowable = allow)
+
+
+w <- weight_object$w_rmpw
+e1 <- weight_object$e1
+e0 <- weight_object$e0
 
 w1 <- glm(G ~ 1, data = df_allowable, family = binomial(link = "logit"))$fitted.values / 
   glm(G ~ ., data = df_allowable, family = binomial(link = "logit"))$fitted.values
@@ -96,7 +101,9 @@ w0 <- glm(1 - G ~ 1, data = df_allowable, family = binomial(link = "logit"))$fit
 
 summary(w)
 
-df_yz <- df_yz %>% mutate(w_rmpw = w)
+df_yz <- df_yz %>% mutate(w_rmpw = w,
+                          e1 = e1,
+                          e0 = e0,)
 write_csv(df_yz, paste0("../data/list1_YZGW_", Z_method, "_", outcome, ".csv"))
 
 message(paste0("CSV file for Z method ", Z_method, " and outcome ", outcome, " has been written."))
@@ -149,12 +156,15 @@ post_weight_Z <- colSums(X_stnd[Z == 1, ] * w[Z == 1] / sum(w[Z == 1])) - colMea
 max(abs(post_weight_Z))
 
 XG1 <- X_stnd[G == 1, ]
-XG1_w <- apply(XG1, 2, function(x) x * w[G == 1] / sum(w[G == 1]))
+XG1_stnd <- apply(XG1, 2, scale)
+XG1_w <- apply(XG1_stnd, 2, function(x) x * w[G == 1] / sum(w[G == 1]))
 ZG1 <- Z[G == 1]
 
-post_weight_Z <- colSums(XG1_w[ZG1 == 1, ]) - colSums(XG1_w[ZG1 == 0, ])
+pre_weight_Z <- colMeans(XG1_stnd) - colMeans(XG1_stnd[ZG1 == 1, ])
+post_weight_Z <- colMeans(XG1_stnd) - colSums(XG1_w[ZG1 == 1, ])
 
-loveZ <- lovePlot(pre_weight_Z, post_weight_Z, title = "Covariate Balance wrt Parental Support\n within SM group")
+loveZ <- lovePlot(pre_weight_Z, post_weight_Z, 
+                  title = "Covariate Balance between all SM and treated SM")
 loveZ
 
 
