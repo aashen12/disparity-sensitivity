@@ -155,13 +155,14 @@ max(abs(pre_weight_Z))
 post_weight_Z <- colSums(X_stnd[Z == 1, ] * w[Z == 1] / sum(w[Z == 1])) - colMeans(X_stnd[Z == 0, ])
 max(abs(post_weight_Z))
 
-XG1 <- X_stnd[G == 1, ]
-XG1_stnd <- apply(XG1, 2, scale)
+#XG1 <- X_stnd[G == 1, ]
+XG1_stnd <- apply(X_plot[G == 1, ], 2, scale)
 XG1_w <- apply(XG1_stnd, 2, function(x) x * w[G == 1] / sum(w[G == 1]))
 ZG1 <- Z[G == 1]
 
 pre_weight_Z <- colMeans(XG1_stnd) - colMeans(XG1_stnd[ZG1 == 1, ])
-post_weight_Z <- colMeans(XG1_stnd) - colSums(XG1_w[ZG1 == 1, ])
+post_weight_Z <- colSums(XG1_w) - colSums(XG1_w[ZG1 == 1, ])
+#post_weight_Z <- colMeans(XG1_stnd) - colSums(XG1_w[ZG1 == 1, ])
 
 loveZ <- lovePlot(pre_weight_Z, post_weight_Z, 
                   title = "Covariate Balance between all SM and treated SM")

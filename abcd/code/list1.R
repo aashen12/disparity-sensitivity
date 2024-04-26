@@ -1,5 +1,7 @@
 # Analysis of list 1
 rm(list = ls())
+# devtools::install_github("https://github.com/aashen12/decompsens")
+
 library(tidyverse)
 library(decompsens)
 library(parallel)
@@ -241,23 +243,23 @@ generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
   # into account whether we care about red or res
   
   # return bounds and mu_10_hat
-  amplification <- decompsens::decompAmplify(G, Z, XA, XN, Y, w, mu_10=mu10, Lambda = Lam)
-  
+  amplification <- decompsens::decompAmplify(G, Z, XA, XN, Y, w, mu_10=mu10, Lambda = Lam, e1 = e1, e0 = e0)
+  bounds <- amplification$maxbias
   
   strongest_cov_df <- amplification[[1]] %>% drop_na()
   max_imbal_stnd <- amplification$max_imbal_stnd
   max_betau_01 <- amplification$max_beta
 
-  maxbias <- max(abs(bounds))
+  maxbias <- max(abs(bounds)) # 4/25/24 GNE: this is wrong. Max bias is larger due to scaling factors which must be accounted for,
   
   max_betau_01 <- max(strongest_cov_df$coeff)
   max_imbal <- max(strongest_cov_df$imbal)
   
   if (estimand == "residual") {
-    beta <- seq(min(strongest_cov_df$coeff) - 0.2, max(strongest_cov_df$coeff) + 0.2, by = 0.01)
+    beta <- seq(max(0, min(strongest_cov_df$coeff) - 0.2), max(strongest_cov_df$coeff) + 0.3, by = 0.01)
     imbalance <- seq(0.01, max(strongest_cov_df$imbal) + 0.2, by = 0.005)
   } else {
-    beta <- seq(min(strongest_cov_df$coeff) - 0.2, max(strongest_cov_df$coeff) + 0.2, by = 0.01)
+    beta <- seq(max(0, min(strongest_cov_df$coeff) - 0.2), max(strongest_cov_df$coeff) + 0.2, by = 0.01)
     imbalance <- seq(0.001, max(strongest_cov_df$imbal) + 0.2, by = 0.005)
   }
   
@@ -273,7 +275,7 @@ generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
   
   if (estimand == "residual") {
     bins <- seq(round(maxbias, 2) - 0.2, round(maxbias, 2) + 0.1, length.out = 4) %>% round(3)
-    bins <- c(0.05, 0.15, 0.3)
+    bins <- c(0.15, 0.2, 0.25)
   } else {
     bins <- seq(round(maxbias, 2) - 0.05, round(maxbias, 2) + 0.05, length.out = 4) %>% round(3)
     bins <- c(0.05, 0.12, 0.22)
@@ -284,6 +286,7 @@ generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
   
   
   p1 <- df_plot %>%
+    filter(beta >= 0) %>% 
     ggplot(aes(x = imbalance, y = beta, z = bias)) +
     theme_bw() + 
     geom_contour(col="gray55", breaks = bins) + 
@@ -305,7 +308,7 @@ generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
     pivot_longer(cols = c("imbal", "imbal_wt"), names_to = "imbal_type", values_to = "imbal_val") #%>% filter(imbal_type == "imbal")
   
   num_cov <- min(nrow(strongest_cov_df), num_cov_lbl * 2)
-  p1_full <- p1 + geom_point(data = strongest_cov_df_long %>% filter(covar %in% non_allowable_covs) %>% slice(1:num_cov), 
+  p1_full <- p1 + geom_point(data = (strongest_cov_df_long %>% filter(covar %in% non_allowable_covs) %>% slice(1:num_cov)), 
                              aes(x = imbal_val, y = coeff, z = 0, color = imbal_type), size = psize) + 
     scale_color_manual(labels = c("imbal" = "Pre-wt", "imbal_wt" = "Post-wt"),
                        values = c("imbal" = "red", "imbal_wt" = "forestgreen"))
