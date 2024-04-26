@@ -25,7 +25,7 @@ Z_method <- "worry_upset"
 # aggregate
 # worry_upset
 
-outcome <- "ideation" # ideation or attempt
+outcome <- "attempt" # ideation or attempt
 
 
 interact <- FALSE
@@ -110,8 +110,10 @@ message(paste0("CSV file for Z method ", Z_method, " and outcome ", outcome, " h
 
 
 
-X_plot <- X_plot <- cbind(model.matrix(~ . -1, data = df_x %>% select(all_of(allowable_covs))),
-                          model.matrix(~ . -1, data = df_x %>% select(all_of(non_allowable_covs)))) %>% NAImpute()
+X_plot <- cbind(model.matrix(~ .^2 -1, data = df_x %>% select(all_of(allowable_covs))),
+                model.matrix(~ .^2 -1, data = df_x %>% select(all_of(non_allowable_covs)))) %>% NAImpute()
+
+
 X_stnd <- apply(X_plot, 2, scale) %>% data.frame()
 
 

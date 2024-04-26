@@ -1,6 +1,8 @@
 # Analysis of list 1
 rm(list = ls())
 # devtools::install_github("https://github.com/aashen12/decompsens")
+# devtools::install_github("https://github.com/aashen12/decompsens", ref = "main", auth_token = Sys.getenv("GITHUBTOKEN"))
+
 
 library(tidyverse)
 library(decompsens)
@@ -26,7 +28,7 @@ Z_method <- "worry_upset"
 # aggregate
 # worry_upset
 
-outcome <- "ideation" # ideation or attempt
+outcome <- "attempt" # ideation or attempt
 
 df_x <- read_csv(paste0("../data/list1_X_", Z_method, "_", outcome, ".csv"))
 df_yz <- read_csv(paste0("../data/list1_YZGW_", Z_method, "_", outcome, ".csv"))
@@ -341,10 +343,10 @@ generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
   
   if (estimand == "reduction") {
     p1_full_unscaled + 
-      geom_text(x = 0.9, y = 0.27,
+      geom_text(x = 0.65, y = 0.23,
                 label = TeX(paste0("$\\Lambda^{*} = ", Lam)),
                 size = 8, color = "black") +
-      geom_text(x = 0.9, y = 0.245,
+      geom_text(x = 0.65, y = 0.2,
                 label = paste0("Bias: ", round(maxbias, 3)), size = 8, color = "black") 
   } else {
     p1_full_unscaled + 
@@ -356,8 +358,8 @@ generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
   }
 }
 
-red_plot <- generatePlot(num_cov_lbl = 3, psize = 5, estimand = "red")
-resid_plot <- generatePlot(num_cov_lbl = 3, psize = 5, estimand = "resid")
+red_plot <- generatePlot(num_cov_lbl = 6, psize = 5, estimand = "red")
+resid_plot <- generatePlot(num_cov_lbl = 6, psize = 5, estimand = "resid")
 
 
 red_plot
