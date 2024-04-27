@@ -9,6 +9,7 @@ library(decompsens)
 library(parallel)
 library(doParallel)
 library(boot)
+library(jointVIP)
 library(latex2exp)
 
 options(na.action='na.pass')
@@ -71,6 +72,22 @@ mu0 <- mean(Y[G == 0])
 mean(Z[G == 1]) - mean(Z[G == 0])
 
 mean(Z[G == 1]) / mean(Z[G == 0])
+
+
+
+full_df <- cbind(df_x, data.frame(Z=Z,G=G,Y=Y)) %>% tibble()
+
+samp <- sample(1:nrow(full_df), 120, replace = FALSE)
+pilot <- full_df %>% slice(samp) %>% filter(Z == 0) %>% drop_na()
+analysis <- full_df %>% slice(-samp) %>% drop_na()
+
+vip_obj <- jointVIP::create_jointVIP(treatment = "Z",
+                                     outcome = "Y",
+                                     covariates = c("family_conflict", "age", "peer_victimization"),
+                                     pilot_df = pilot,
+                                     analysis_df = analysis)
+
+plot(vip_obj)
 
 
 mu1
@@ -295,8 +312,8 @@ generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
     metR::geom_text_contour(aes(z = bias), 
                             breaks = bins,
                             stroke = 0.2, skip = 0) + 
-    metR::geom_contour_fill(breaks = c(maxbias, 1000 * maxbias), fill='powderblue', alpha = 0.5) +
-    geom_contour(breaks = c(maxbias), col='blue', linewidth = 1) + 
+    metR::geom_contour_fill(breaks = c(maxbias, 1000 * maxbias), fill='dodgerblue3', alpha = 0.2) +
+    geom_contour(breaks = c(maxbias), col='dodgerblue3', linewidth = 1.2, alpha = 2) + 
     metR::geom_text_contour(aes(z = maxbias), stroke = 0.2)
     #geom_point(x = 0.65, y = maxbias / 0.65, size = psize - 2, color = "black")
   
@@ -358,8 +375,7 @@ generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
   }
 }
 
-red_plot <- generatePlot(num_cov_lbl = 6, psize = 5, estimand = "red")
-resid_plot <- generatePlot(num_cov_lbl = 6, psize = 5, estimand = "resid")
+red_plot <- generatePlot(num_cov_lbl = 6, psize = 4, estimand = "red"); resid_plot <- generatePlot(num_cov_lbl = 6, psize = 3.3, estimand = "resid")
 
 
 red_plot
