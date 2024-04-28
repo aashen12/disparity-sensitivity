@@ -75,20 +75,6 @@ mean(Z[G == 1]) / mean(Z[G == 0])
 
 
 
-full_df <- cbind(df_x, data.frame(Z=Z,G=G,Y=Y)) %>% tibble()
-
-samp <- sample(1:nrow(full_df), 120, replace = FALSE)
-pilot <- full_df %>% slice(samp) %>% filter(Z == 0) %>% drop_na()
-analysis <- full_df %>% slice(-samp) %>% drop_na()
-
-vip_obj <- jointVIP::create_jointVIP(treatment = "Z",
-                                     outcome = "Y",
-                                     covariates = c("family_conflict", "age", "peer_victimization"),
-                                     pilot_df = pilot,
-                                     analysis_df = analysis)
-
-plot(vip_obj)
-
 
 mu1
 mu0
@@ -307,7 +293,6 @@ generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
   p1 <- df_plot %>%
     filter(beta >= 0) %>% 
     ggplot(aes(x = imbalance, y = beta, z = bias)) +
-    theme_bw() + 
     geom_contour(col="gray55", breaks = bins) + 
     metR::geom_text_contour(aes(z = bias), 
                             breaks = bins,
@@ -348,7 +333,7 @@ generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
     #                           nudge_y = 0.005, nudge_x = 0.005, label.padding = 0.1,
     #                           point.padding = 0.1) + 
     #geom_polygon(data = hull, aes(x = imbal, y = coeff, z = 0), alpha = 0.3, fill = "red") + 
-    theme_bw(base_size = 20) + 
+    theme_minimal(base_size = 20) + 
     theme(plot.title = element_text(hjust = 0.5, face = "bold")) + 
     labs(x = TeX("absolute standardized imbalance in $\\U$"), y = TeX("absolute $\\beta_u$"),
          title = paste0(title), color = c("Imbalance")) + 

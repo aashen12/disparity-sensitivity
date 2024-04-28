@@ -71,7 +71,7 @@ lovePlot <- function(pre_weight, post_weight, num_covs = 100, title = "Covariate
     mutate(covariate = fct_reorder(covariate, allowability)) %>% 
     slice(1:subset_covs) %>% 
     ggplot(aes(x = mean_difference, y = covariate, color = balance)) +
-    geom_point(size = 6) +
+    geom_point(size = 3) +
     theme_minimal(base_size = 22) +
     scale_color_manual(values = c("pre_weight" = "red", "post_weight" = "blue")) +
     geom_vline(xintercept = 0, linetype = "dotted") +
