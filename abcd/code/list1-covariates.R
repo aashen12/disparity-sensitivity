@@ -170,4 +170,3 @@ loveZ <- lovePlot(pre_weight_Z, post_weight_Z,
                   title = "Covariate Balance between all SM and treated SM")
 loveZ
 
-
