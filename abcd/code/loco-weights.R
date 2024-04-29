@@ -66,7 +66,41 @@ w <- df_yz$w_rmpw
 e1 <- df_yz$e1
 e0 <- df_yz$e0
 
+X_df <- cbind(df_allowable, df_non_allowable)
 
+# Compute leave-one-out weights
+
+covariate_names <- c(allowable_covs, non_allowable_covs, "sexF", "sexM")
+covariate_names <- covariate_names[covariate_names != "sex"]
+
+loco_weights <- map(
+  seq_along(covariate_names),
+  function(i) {
+    cov <- covariate_names[i]
+    if (cov %in% c(allowable_covs, "sexF", "sexM")) {
+      contains_cov <- str_detect(names(df_allowable), cov)
+      print(paste0("Covariate ", cov, " is allowable."))
+      df_a_temp <- df_allowable[, !contains_cov]
+      df_n_temp <- df_non_allowable
+    } else {
+      contains_cov <- str_detect(names(df_non_allowable), cov)
+      print(paste0("Covariate ", cov, " is non-allowable."))
+      df_n_temp <- df_non_allowable[, !contains_cov]
+      df_a_temp <- df_allowable
+    }
+    weight_object <- decompsens::estimateRMPW(G=G, Z=Z, Y=Y, XA=df_a_temp, XN=df_n_temp,
+                                              trim = switch(outcome, "ideation" = 0.01, "attempt" = 0.05), 
+                                              allowable = TRUE)
+    w <- weight_object$w_rmpw
+    e1 <- weight_object$e1
+    e0 <- weight_object$e0
+    list(w = w, e1 = e1, e0 = e0)
+  }
+); names(loco_weights) <- covariate_names
+
+
+saveRDS(loco_weights, paste0("../data/loco_weights_", Z_method, "_", outcome, ".rds"))
+print(paste0("Saved loco weights to ", paste0("../data/loco_weights_", Z_method, "_", outcome, ".rds")))
 
 
 

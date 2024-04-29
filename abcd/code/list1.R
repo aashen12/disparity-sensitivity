@@ -29,7 +29,7 @@ Z_method <- "worry_upset"
 # aggregate
 # worry_upset
 
-outcome <- "attempt" # ideation or attempt
+outcome <- "ideation" # ideation or attempt
 
 df_x <- read_csv(paste0("../data/list1_X_", Z_method, "_", outcome, ".csv"))
 df_yz <- read_csv(paste0("../data/list1_YZGW_", Z_method, "_", outcome, ".csv"))
@@ -209,6 +209,22 @@ XA <- XA[, !grepl(":.*NA$", colnames(XA))]
 XN <- model.matrix(~ . -1, data = df_x %>% select(all_of(non_allowable_covs))) %>% NAImpute()
 XN <- XN[, !grepl(":.*NA$", colnames(XN))]
 
+loco_weights <- readRDS(paste0("../data/loco_weights_", Z_method, "_", outcome, ".rds"))
+
+e1_star <- df_yz$e1
+e0_star <- df_yz$e0
+w_star <- df_yz$w_rmpw
+
+out_loco <- map(seq_along(loco_weights), function(i) {
+  cov <- names(loco_weights)[[i]]
+  weight_obj_j <- loco_weights[[i]]
+  e1_j <- weight_obj_j$e1
+  e0_j <- weight_obj_j$e0
+  w_j <- weight_obj_j$w
+  imbalance_term <- (1 - e1_star / e1_j) * (e1_j - e0_j) / (1 - e1_j)
+  imbalance_term
+})
+
 generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
   
   if (estimand == "resid" | estimand == "residual") {
@@ -243,12 +259,13 @@ generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
   
   print(paste0("Lambda: ", Lam))
   
-  
   # even if we care about red or res, we use point bc the lambda already takes
   # into account whether we care about red or res
   
   # return bounds and mu_10_hat
-  amplification <- decompsens::decompAmplify(G, Z, XA, XN, Y, w, mu_10=mu10, Lambda = Lam, e1 = e1, e0 = e0)
+  amplification <- decompsens::decompAmplify(G, Z, XA, XN, Y, w, mu_10=mu10, 
+                                             Lambda = Lam, e1 = e1, e0 = e0, 
+                                             loco_weights = out_loco)
   bounds <- amplification$maxbias
   
   strongest_cov_df <- amplification[[1]] %>% drop_na()
@@ -363,8 +380,8 @@ generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
 red_plot <- generatePlot(num_cov_lbl = 6, psize = 4, estimand = "red"); resid_plot <- generatePlot(num_cov_lbl = 6, psize = 3.3, estimand = "resid")
 
 
-red_plot
-resid_plot
 
+resid_plot
+red_plot
 
 
