@@ -113,6 +113,9 @@ message(paste0("CSV file for Z method ", Z_method, " and outcome ", outcome, " h
 X_plot <- cbind(model.matrix(~ .^2 -1, data = df_x %>% select(all_of(allowable_covs))),
                 model.matrix(~ .^2 -1, data = df_x %>% select(all_of(non_allowable_covs)))) %>% NAImpute()
 
+# X_plot <- cbind(model.matrix(~ . -1, data = df_x %>% select(all_of(allowable_covs))),
+#                 model.matrix(~ . -1, data = df_x %>% select(all_of(non_allowable_covs)))) %>% NAImpute()
+
 
 X_stnd <- apply(X_plot, 2, scale) %>% data.frame()
 
@@ -160,11 +163,26 @@ max(abs(post_weight_Z))
 #XG1 <- X_stnd[G == 1, ]
 XG1_stnd <- apply(X_plot[G == 1, ], 2, scale)
 XG1_w <- apply(XG1_stnd, 2, function(x) x * w[G == 1] / sum(w[G == 1]))
+
+# compute scaling factors 
+sf <- ((e0 - e1) / (1 - e1))[G == 1] #%>% abs()
+length(sf)
+dim(XG1_stnd)
+X_sf <- apply(XG1_stnd, 2, function(x) x * sf / sum(abs(sf)))
+
 ZG1 <- Z[G == 1]
+sum(ZG1)
+
+sf_Z1 <- ((e0 - e1) / (e1 - e1^2))[G == 1 & Z == 1] #%>% abs()
+dim(XG1_stnd[ZG1 == 1, ])
+length(sf_Z1)
+X_sf_Z1 <- apply(XG1_stnd[ZG1 == 1, ], 2, function(x) x * sf_Z1 / sum(abs(sf_Z1)))
+
 
 pre_weight_Z <- colMeans(XG1_stnd) - colMeans(XG1_stnd[ZG1 == 1, ])
 post_weight_Z <- colSums(XG1_w) - colSums(XG1_w[ZG1 == 1, ])
 #post_weight_Z <- colMeans(XG1_stnd) - colSums(XG1_w[ZG1 == 1, ])
+post_weight_Z <- colSums(X_sf) - colSums(X_sf_Z1)
 
 loveZ <- lovePlot(pre_weight_Z, post_weight_Z, 
                   title = "Covariate Balance between all SM and treated SM")

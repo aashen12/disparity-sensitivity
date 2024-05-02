@@ -296,7 +296,7 @@ generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
     geom_polygon(data = hull, aes(x = imbal, y = coeff, z = 0), alpha = 0.3, fill = "red") + 
     theme_bw(base_size = 20) + 
     theme(plot.title = element_text(hjust = 0.5, face = "bold")) + 
-    labs(x = TeX("absolute $\\delta_u$"), y = TeX("absolute $\\beta_u$"),
+    labs(x = TeX("absolute $\\delta_u$"), y = TeX("$\\beta_u$"),
          title = paste0(title), color = c("Imbalance")) + 
     theme(legend.position = "bottom") + 
     geom_hline(yintercept = 0, color = "gray55") + 

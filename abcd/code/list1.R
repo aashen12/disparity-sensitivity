@@ -29,7 +29,7 @@ Z_method <- "worry_upset"
 # aggregate
 # worry_upset
 
-outcome <- "ideation" # ideation or attempt
+outcome <- "attempt" # ideation or attempt
 
 df_x <- read_csv(paste0("../data/list1_X_", Z_method, "_", outcome, ".csv"))
 df_yz <- read_csv(paste0("../data/list1_YZGW_", Z_method, "_", outcome, ".csv"))
@@ -279,10 +279,10 @@ generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
   
   if (estimand == "residual") {
     beta <- seq(max(0, min(strongest_cov_df$coeff) - 0.2), max(strongest_cov_df$coeff) + 0.3, by = 0.01)
-    imbalance <- seq(0.01, max(strongest_cov_df$imbal) + 0.2, by = 0.005)
+    imbalance <- seq(0.01, max(strongest_cov_df$imbal, strongest_cov_df$imbal_wt) + 0.2, by = 0.005)
   } else {
     beta <- seq(max(0, min(strongest_cov_df$coeff) - 0.2), max(strongest_cov_df$coeff) + 0.2, by = 0.01)
-    imbalance <- seq(0.001, max(strongest_cov_df$imbal) + 0.2, by = 0.005)
+    imbalance <- seq(0.001, max(strongest_cov_df$imbal, strongest_cov_df$imbal_wt) + 0.2, by = 0.005)
   }
   
   data.fit <- expand.grid(beta, imbalance)
