@@ -168,7 +168,7 @@ XG1_w <- apply(XG1_stnd, 2, function(x) x * w[G == 1] / sum(w[G == 1]))
 sf <- ((e0 - e1) / (1 - e1))[G == 1] #%>% abs()
 length(sf)
 dim(XG1_stnd)
-X_sf <- apply(XG1_stnd, 2, function(x) x * sf / sum(abs(sf)))
+X_sf <- apply(XG1_stnd, 2, function(x) x * abs(sf) / sum(abs(sf)))
 
 ZG1 <- Z[G == 1]
 sum(ZG1)
@@ -176,7 +176,7 @@ sum(ZG1)
 sf_Z1 <- ((e0 - e1) / (e1 - e1^2))[G == 1 & Z == 1] #%>% abs()
 dim(XG1_stnd[ZG1 == 1, ])
 length(sf_Z1)
-X_sf_Z1 <- apply(XG1_stnd[ZG1 == 1, ], 2, function(x) x * sf_Z1 / sum(abs(sf_Z1)))
+X_sf_Z1 <- apply(XG1_stnd[ZG1 == 1, ], 2, function(x) x * abs(sf_Z1) / sum(abs(sf_Z1)))
 
 
 pre_weight_Z <- colMeans(XG1_stnd) - colMeans(XG1_stnd[ZG1 == 1, ])

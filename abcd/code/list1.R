@@ -326,7 +326,7 @@ generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
   p1
   
   strongest_cov_df_long <- strongest_cov_df %>% 
-    pivot_longer(cols = c("imbal", "imbal_wt"), names_to = "imbal_type", values_to = "imbal_val") #%>% filter(imbal_type == "imbal")
+    pivot_longer(cols = c("imbal", "imbal_wt"), names_to = "imbal_type", values_to = "imbal_val") %>% filter(imbal_type == "imbal_wt")
   
   num_cov <- min(nrow(strongest_cov_df), num_cov_lbl * 2)
   p1_full <- p1 + geom_point(data = (strongest_cov_df_long %>% filter(covar %in% non_allowable_covs) %>% slice(1:num_cov)), 
