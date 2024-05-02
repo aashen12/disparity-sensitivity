@@ -29,7 +29,7 @@ Z_method <- "worry_upset"
 # aggregate
 # worry_upset
 
-outcome <- "attempt" # ideation or attempt
+outcome <- "ideation" # ideation or attempt
 
 df_x <- read_csv(paste0("../data/list1_X_", Z_method, "_", outcome, ".csv"))
 df_yz <- read_csv(paste0("../data/list1_YZGW_", Z_method, "_", outcome, ".csv"))
@@ -214,7 +214,7 @@ out_loco <- map(seq_along(loco_weights), function(i) {
 
 
 estimand <- "reduction"
-generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
+generatePlot <- function(num_cov_lbl = 8, num_pt_lbl = 3, psize = 6, estimand = "resid") {
   
   if (estimand == "resid" | estimand == "residual") {
     estimand <- "residual"
@@ -330,10 +330,10 @@ generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
     slice(chull(coeff, imbal))
 
   p1_full_unscaled <- p1_full + 
-    ggrepel::geom_label_repel(data = strongest_cov_df[1:num_cov_lbl,], 
+    ggrepel::geom_label_repel(data = strongest_cov_df %>% filter(covar %in% non_allowable_covs) %>% slice(1:num_pt_lbl), 
                               aes(x = imbal_wt, y = coeff, z = 0, label = covar),
-                              nudge_y = -0.005, nudge_x = 0.005, label.padding = 0.1,
-                              point.padding = 0.1) + 
+                              nudge_y = -0.005, nudge_x = 0.005, label.padding = 0.05,
+                              point.padding = 0.05) + 
     # ggrepel::geom_label_repel(data = strongest_cov_df[1:num_cov_lbl,],
     #                           aes(x = imbal_wt, y = coeff, z = 0, label = covar),
     #                           nudge_y = 0.005, nudge_x = 0.005, label.padding = 0.1,
