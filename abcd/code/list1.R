@@ -147,20 +147,7 @@ residual / obs_disp
 # 
 # sd(out_red)
 # mean(out_red)
-reduction
 
-
-lam <- 5
-h <- log(lam)
-
-wh <- w * exp(h)
-
-mu10_h <- weighted.mean(Y[G == 1], wh[G == 1])
-mu10_h
-mu10
-
-mu0
-mu1
 
 
 seq <- seq(1, 3, by = 0.005)
@@ -225,6 +212,8 @@ out_loco <- map(seq_along(loco_weights), function(i) {
   imbalance_term
 })
 
+
+estimand <- "reduction"
 generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
   
   if (estimand == "resid" | estimand == "residual") {
@@ -326,7 +315,7 @@ generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
   p1
   
   strongest_cov_df_long <- strongest_cov_df %>% 
-    pivot_longer(cols = c("imbal", "imbal_wt"), names_to = "imbal_type", values_to = "imbal_val") %>% filter(imbal_type == "imbal_wt")
+    pivot_longer(cols = c("imbal", "imbal_wt"), names_to = "imbal_type", values_to = "imbal_val") #%>% filter(imbal_type == "imbal_wt")
   
   num_cov <- min(nrow(strongest_cov_df), num_cov_lbl * 2)
   p1_full <- p1 + geom_point(data = (strongest_cov_df_long %>% filter(covar %in% non_allowable_covs) %>% slice(1:num_cov)), 
@@ -342,7 +331,7 @@ generatePlot <- function(num_cov_lbl = 8, psize = 6, estimand = "resid") {
 
   p1_full_unscaled <- p1_full + 
     ggrepel::geom_label_repel(data = strongest_cov_df[1:num_cov_lbl,], 
-                              aes(x = imbal, y = coeff, z = 0, label = covar),
+                              aes(x = imbal_wt, y = coeff, z = 0, label = covar),
                               nudge_y = -0.005, nudge_x = 0.005, label.padding = 0.1,
                               point.padding = 0.1) + 
     # ggrepel::geom_label_repel(data = strongest_cov_df[1:num_cov_lbl,],

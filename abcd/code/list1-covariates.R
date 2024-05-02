@@ -110,8 +110,8 @@ message(paste0("CSV file for Z method ", Z_method, " and outcome ", outcome, " h
 
 
 
-X_plot <- cbind(model.matrix(~ .^2 -1, data = df_x %>% select(all_of(allowable_covs))),
-                model.matrix(~ .^2 -1, data = df_x %>% select(all_of(non_allowable_covs)))) %>% NAImpute()
+X_plot <- cbind(model.matrix(~ . -1, data = df_x %>% select(all_of(allowable_covs))),
+                model.matrix(~ . -1, data = df_x %>% select(all_of(non_allowable_covs)))) %>% NAImpute()
 
 # X_plot <- cbind(model.matrix(~ . -1, data = df_x %>% select(all_of(allowable_covs))),
 #                 model.matrix(~ . -1, data = df_x %>% select(all_of(non_allowable_covs)))) %>% NAImpute()
