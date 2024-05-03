@@ -35,7 +35,8 @@ df_x <- read_csv(paste0("../data/list1_X_", Z_method, "_", outcome, ".csv"))
 df_yz <- read_csv(paste0("../data/list1_YZGW_", Z_method, "_", outcome, ".csv"))
 
 mediators <- c("src_subject_id")
-allowable_covs <- c("age", "sex", "sib_num", "sib_order")
+#allowable_covs <- c("age", "sex", "sib_order", "sib_num")
+allowable_covs <- c("age", "sex")
 #allowable_covs <- c("age", "sex", "sib_num", "sib_order", "income", "adi")
 non_allowable_covs <- setdiff(names(df_x)[!names(df_x) %in% mediators], allowable_covs)
 
@@ -120,33 +121,39 @@ residual / obs_disp
 
 
 # Bootstrap standard errors
-# B <- 1000
-# resid_boot <- numeric(B)
-# allowable <- TRUE
-# out <- parallel::mclapply(1:B, function(i) {
-#   ind <- sample(1:length(Y), length(Y), replace = TRUE)
-#   w_boot <- decompsens::estimateRMPW(G=G[ind], Z=Z[ind], Y=Y[ind], XA=XA_log[ind,], XN=XN_log[ind,],
-#                                      trim = 0.01, allowable = TRUE)
-# 
-#   mu10_boot <- sum(Y[ind][G[ind] == 1] * w_boot[G[ind] == 1]) / sum(w_boot[G[ind] == 1])
-#   mu1_boot <- mean(Y[ind][G[ind] == 1])
-#   mu0_boot <- mean(Y[ind][G[ind] == 0])
-#   resid_boot <- mu10_boot - mu0_boot
-#   red_boot <- mu1_boot - mu10_boot
-#   list(resid_boot = resid_boot, red_boot = red_boot)
-# }, mc.cores = numCores)
-# 
-# out_resid <- unlist(lapply(out, function(x) x[["resid_boot"]]))
-# out_red <- unlist(lapply(out, function(x) x[["red_boot"]]))
-# 
-# quantile(out_resid, c(0.025, 0.975))
-# c(2*residual - quantile(out_resid, c(0.975, 0.025)), residual) # pivot bootstrap CI
-# 
-# quantile(out_red, c(0.025, 0.975))
-# c(2*reduction - quantile(out_red, c(0.975, 0.025)), reduction)
-# 
-# sd(out_red)
-# mean(out_red)
+B <- 1000
+resid_boot <- numeric(B)
+allowable <- TRUE
+out <- parallel::mclapply(1:B, function(i) {
+  # ind <- sample(1:length(Y), length(Y), replace = TRUE)
+  ind_G1 <- sample(which(G == 1), sum(G == 1), replace = TRUE)
+  ind_G0 <- sample(which(G == 0), sum(G == 0), replace = TRUE)
+  ind <- c(ind_G1, ind_G0)
+  w_boot_obj <- decompsens::estimateRMPW(G=G[ind], Z=Z[ind], Y=Y[ind],
+                                         XA=XA_log[ind,], XN=XN_log[ind,],
+                                         trim = switch(outcome, "ideation" = 0.01, "attempt" = 0.05),
+                                         allowable = FALSE)
+  w_boot <- w_boot_obj$w_rmpw
+  # w_boot <- w[ind]
+  mu10_boot <- sum(Y[ind][G[ind] == 1] * w_boot[G[ind] == 1]) / sum(w_boot[G[ind] == 1])
+  mu1_boot <- mean(Y[ind][G[ind] == 1])
+  mu0_boot <- mean(Y[ind][G[ind] == 0])
+  resid_boot <- mu10_boot - mu0_boot
+  red_boot <- mu1_boot - mu10_boot
+  list(resid_boot = resid_boot, red_boot = red_boot)
+}, mc.cores = numCores)
+
+out_resid <- unlist(lapply(out, function(x) x[["resid_boot"]]))
+out_red <- unlist(lapply(out, function(x) x[["red_boot"]]))
+
+quantile(out_red, c(0.025, 0.975)) # percentile bootstrap
+c(2*reduction - quantile(out_red, c(0.975, 0.025)), reduction) # pivot bootstrap
+mean(out_red) + c(-1, 1) * qnorm(0.975) * sd(out_red) # boot CI
+
+sd(out_red)
+mean(out_red)
+
+# 95% CI for out_red
 
 
 
@@ -180,9 +187,3 @@ p_extrema <- out %>%
 
 p_extrema
 
-
-decompsens::getExtrema(G=G, Y=Y, w=w, gamma = log(1.12), estimand = "red", RD = TRUE, verbose = FALSE)
-mu1 - mu10
-
-decompsens::getExtrema(G=G, Y=Y, w=w, gamma = log(1.05), estimand = "point", RD = TRUE, verbose = FALSE)
-mu1

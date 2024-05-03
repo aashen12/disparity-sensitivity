@@ -36,7 +36,8 @@ df_x <- read_csv(paste0("../data/list1_X_", Z_method, "_", outcome, ".csv"))
 df_yz <- read_csv(paste0("../data/list1_YZGW_", Z_method, "_", outcome, ".csv"))
 
 mediators <- c("src_subject_id")
-allowable_covs <- c("age", "sex", "sib_num", "sib_order")
+#allowable_covs <- c("age", "sex", "sib_order", "sib_num")
+allowable_covs <- c("age", "sex")
 #allowable_covs <- c("age", "sex", "sib_num", "sib_order", "income", "adi")
 non_allowable_covs <- setdiff(names(df_x)[!names(df_x) %in% mediators], allowable_covs)
 
@@ -141,10 +142,10 @@ generatePlot <- function(num_cov_lbl = 8, num_pt_lbl = 3, psize = 6, estimand = 
   
   if (estimand == "residual") {
     bins <- seq(round(maxbias, 2) - 0.2, round(maxbias, 2) + 0.1, length.out = 4) %>% round(3)
-    bins <- c(0.15, 0.2, 0.25)
+    bins <- c(0.01, 0.05, 0.12, 0.22)
   } else {
     bins <- seq(round(maxbias, 2) - 0.05, round(maxbias, 2) + 0.05, length.out = 4) %>% round(3)
-    bins <- c(0.05, 0.12, 0.22)
+    bins <- c(0.01, 0.05, 0.12, 0.22)
   }
   
   bins <- bins[bins > 0]
@@ -213,10 +214,10 @@ generatePlot <- function(num_cov_lbl = 8, num_pt_lbl = 3, psize = 6, estimand = 
                 label = paste0("Bias: ", round(maxbias, 3)), size = 8, color = "black") 
   } else {
     p1_full_unscaled + 
-      geom_text(x = 0.92, y = 0.22,
+      geom_text(x = 0.65, y = 0.23,
                 label = TeX(paste0("$\\Lambda^{*} = ", Lam)),
                 size = 8, color = "black") +
-      geom_text(x = 0.92, y = 0.195,
+      geom_text(x = 0.65, y = 0.2,
                 label = paste0("Bias: ", round(maxbias, 3)), size = 8, color = "black") 
   }
 }

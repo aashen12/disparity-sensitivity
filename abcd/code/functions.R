@@ -75,6 +75,7 @@ lovePlot <- function(pre_weight, post_weight, num_covs = 100, title = "Covariate
     theme_minimal(base_size = 16) +
     scale_color_manual(values = c("pre_weight" = "red", "post_weight" = "blue")) +
     geom_vline(xintercept = 0, linetype = "dotted") +
+    geom_vline(xintercept = 0.1, linetype = "dashed", color = "green") +
     labs(title = title, x = "Absolute Mean Difference", y = "", color = "Sample") +
     scale_x_continuous(limits = c(0, 1)) + # Set x-axis limits
     theme(legend.position = "bottom") + 

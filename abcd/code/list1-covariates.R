@@ -47,7 +47,8 @@ options(na.action='na.pass')
 
 #mediators <- c("peer_victimization")
 mediators <- c("src_subject_id")
-allowable_covs <- c("age", "sex", "sib_num", "sib_order")
+allowable_covs <- c("age", "sex", "sib_order", "sib_num")
+allowable_covs <- c("age", "sex")
 #allowable_covs <- c("age", "sex", "sib_num", "sib_order", "income", "adi")
 non_allowable_covs <- setdiff(names(df_x)[!names(df_x) %in% mediators], allowable_covs)
 
@@ -86,7 +87,7 @@ df_yz %>% group_by(sex_min) %>%
 allow <- TRUE
 
 weight_object <- decompsens::estimateRMPW(G=G, Z=Z, Y=Y, XA=df_allowable, XN=df_non_allowable,
-                              trim = switch(outcome, "ideation" = 0.01, "attempt" = 0.05), 
+                              trim = switch(outcome, "ideation" = 0.05, "attempt" = 0.05), 
                               allowable = allow)
 
 
@@ -113,32 +114,11 @@ message(paste0("CSV file for Z method ", Z_method, " and outcome ", outcome, " h
 X_plot <- cbind(model.matrix(~ .^2 -1, data = df_x %>% select(all_of(allowable_covs))),
                 model.matrix(~ .^2 -1, data = df_x %>% select(all_of(non_allowable_covs)))) %>% NAImpute()
 
-X_plot <- cbind(model.matrix(~ . -1, data = df_x %>% select(all_of(allowable_covs))),
-                model.matrix(~ . -1, data = df_x %>% select(all_of(non_allowable_covs)))) %>% NAImpute()
+# X_plot <- cbind(model.matrix(~ . -1, data = df_x %>% select(all_of(allowable_covs))),
+#                 model.matrix(~ . -1, data = df_x %>% select(all_of(non_allowable_covs)))) %>% NAImpute()
 
 
 X_stnd <- apply(X_plot, 2, scale) %>% data.frame()
-
-
-unweighted_diffs <- lapply(1:ncol(X_stnd), function(i) {
-  tapply(X_stnd[, i], list(G, Z), mean)
-})
-
-
-weighted_diffs <- lapply(1:ncol(X_stnd), function(i) {
-  tapply(X_stnd[, i] * w, list(G, Z), mean)
-})
-
-
-df_balance <- data.frame(
-  X_stnd, G, Z, w
-)
-
-df_balance %>% 
-  group_by(G, Z) %>% 
-  summarise(across(colnames(X_stnd), mean))
-
-
 
 
 pre_weight_G <- colMeans(X_stnd[G == 1, ]) - colMeans(X_stnd[G == 0, ])
@@ -181,10 +161,49 @@ X_sf_Z1 <- apply(XG1_stnd[ZG1 == 1, ], 2, function(x) x * (sf_Z1) / sum(abs(sf_Z
 
 pre_weight_Z <- colMeans(XG1_stnd) - colMeans(XG1_stnd[ZG1 == 1, ])
 post_weight_Z <- colSums(XG1_w) - colSums(XG1_w[ZG1 == 1, ])
-#post_weight_Z <- colMeans(XG1_stnd) - colSums(XG1_w[ZG1 == 1, ])
+post_weight_Z <- colMeans(XG1_stnd) - colSums(XG1_w[ZG1 == 1, ])
 post_weight_Z <- colSums(X_sf) - colSums(X_sf_Z1)
 
 loveZ <- lovePlot(pre_weight_Z, post_weight_Z, 
                   title = "Covariate Balance between all SM and treated SM")
 loveZ
+
+
+pre_weight_G <- colMeans(XG1_stnd) - colMeans(XG1_stnd[ZG1 == 1, ])
+post_weight_G <- colSums(XG1_w) - colSums(XG1_w[ZG1 == 1, ])
+lovePlot(pre_weight_G, post_weight_G, title = "Covariate Balance between SM and weighted SM")
+
+
+### Using SMD ###
+pre_weight_msd <- (colMeans(X_plot[G == 1, ]) - colMeans(X_plot[G == 1 & Z == 1, ])) / 
+  sqrt(
+    (apply(X_plot[G == 1, ], 2, var) + apply(X_plot[G == 1 & Z == 1, ], 2, var)) / 2
+  )
+
+X_sf_smd <- apply(X_stnd[G == 1, ], 2, function(x) x * abs(sf) / sum(abs(sf)))
+X_sf_Z1_smd <- apply(X_stnd[G == 1 & Z == 1, ], 2, function(x) x * abs(sf_Z1) / sum(abs(sf_Z1)))
+
+post_weight_msd_num <- colSums(X_sf_smd) - colSums(X_sf_Z1_smd)
+
+weighted_var <- function(x, w) {
+  w <- abs(w)
+  xbar_w <- sum(x * w) / sum(w)
+  coef <- sum(w) / ( (sum(w))^2 - sum(w^2) )
+  coef * sum(w * (x - xbar_w)^2)
+}
+
+
+post_weight_msd_denom <- sqrt(
+  (apply(X_stnd[G == 1, ], 2, weighted_var, w = sf) + 
+     apply(X_stnd[G == 1 & Z == 1, ], 2, weighted_var, w = sf_Z1)) / 2
+)
+
+post_weight_msd <- post_weight_msd_num / post_weight_msd_denom
+names(post_weight_msd) <- names(pre_weight_msd)
+
+lovePlot(pre_weight_msd, post_weight_msd, title = "Covariate Balance wrt SM and treated SM")
+
+
+
+
 
