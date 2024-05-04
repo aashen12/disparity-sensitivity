@@ -30,12 +30,13 @@ Z_method <- "worry_upset"
 # aggregate
 # worry_upset
 
-outcome <- "ideation" # ideation or attempt
+outcome <- "attempt" # ideation or attempt
 
 df_x <- read_csv(paste0("../data/list1_X_", Z_method, "_", outcome, ".csv"))
 df_yz <- read_csv(paste0("../data/list1_YZGW_", Z_method, "_", outcome, ".csv"))
 
 mediators <- c("src_subject_id")
+mediators <- c("src_subject_id", "family_mental_health")
 #allowable_covs <- c("age", "sex", "sib_order", "sib_num")
 allowable_covs <- c("age", "sex")
 #allowable_covs <- c("age", "sex", "sib_num", "sib_order", "income", "adi")

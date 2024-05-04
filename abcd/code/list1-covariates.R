@@ -46,9 +46,9 @@ options(na.action='na.pass')
 
 
 #mediators <- c("peer_victimization")
-mediators <- c("src_subject_id")
+mediators <- c("src_subject_id", "family_mental_health")
 allowable_covs <- c("age", "sex", "sib_order", "sib_num")
-allowable_covs <- c("age", "sex")
+# allowable_covs <- c("age", "sex")
 #allowable_covs <- c("age", "sex", "sib_num", "sib_order", "income", "adi")
 non_allowable_covs <- setdiff(names(df_x)[!names(df_x) %in% mediators], allowable_covs)
 
@@ -114,8 +114,8 @@ message(paste0("CSV file for Z method ", Z_method, " and outcome ", outcome, " h
 X_plot <- cbind(model.matrix(~ .^2 -1, data = df_x %>% select(all_of(allowable_covs))),
                 model.matrix(~ .^2 -1, data = df_x %>% select(all_of(non_allowable_covs)))) %>% NAImpute()
 
-# X_plot <- cbind(model.matrix(~ . -1, data = df_x %>% select(all_of(allowable_covs))),
-#                 model.matrix(~ . -1, data = df_x %>% select(all_of(non_allowable_covs)))) %>% NAImpute()
+X_plot <- cbind(model.matrix(~ . -1, data = df_x %>% select(all_of(allowable_covs))),
+                model.matrix(~ . -1, data = df_x %>% select(all_of(non_allowable_covs)))) %>% NAImpute()
 
 
 X_stnd <- apply(X_plot, 2, scale) %>% data.frame()
@@ -203,7 +203,7 @@ names(post_weight_msd) <- names(pre_weight_msd)
 
 lovePlot(pre_weight_msd, post_weight_msd, title = "Covariate Balance wrt SM and treated SM")
 
-
+apply(X_plot, 2, table)
 
 
 
