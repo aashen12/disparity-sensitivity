@@ -29,7 +29,7 @@ Z_method <- "worry_upset"
 # aggregate
 # worry_upset
 
-outcome <- "attempt" # ideation or attempt
+outcome <- "ideation" # ideation or attempt
 
 df_x <- read_csv(paste0("../data/list1_X_", Z_method, "_", outcome, ".csv"))
 df_yz <- read_csv(paste0("../data/list1_YZGW_", Z_method, "_", outcome, ".csv"))
@@ -125,6 +125,35 @@ residual / obs_disp
 B <- 1000
 resid_boot <- numeric(B)
 allowable <- TRUE
+
+mu10
+getExtrema(G,Y,gamma = log(1), w = w, verbose = FALSE, estimand = "point")
+
+
+reduction
+getExtrema(G,Y,gamma = log(1.0), w = w, verbose = TRUE, estimand = "red")
+
+residual
+getExtrema(G,Y,gamma = log(1.67), w = w, verbose = TRUE, estimand = "res")
+
+boot_ci_red <- bootstrapCI(G, Z, Y, XA_log, XN_log,
+                           gamma = log(1), trim = switch(outcome, "ideation" = 0.01, "attempt" = 0.05),
+                           estimand = "red", stratify = TRUE,
+                           allowable = TRUE)
+boot_ci_red
+reduction
+
+
+
+# Want to find Lambda such that mu10 = mu0. # 1.3 for ideation, 1.7 for attempt
+mu10
+mu0
+bootstrapCI(G, Z, Y, XA_log, XN_log, gamma = log(1.7), 
+            trim = switch(outcome, "ideation" = 0.01, "attempt" = 0.05),
+            estimand = "point")
+
+
+
 out <- parallel::mclapply(1:B, function(i) {
   # ind <- sample(1:length(Y), length(Y), replace = TRUE)
   ind_G1 <- sample(which(G == 1), sum(G == 1), replace = TRUE)
@@ -133,7 +162,7 @@ out <- parallel::mclapply(1:B, function(i) {
   w_boot_obj <- decompsens::estimateRMPW(G=G[ind], Z=Z[ind], Y=Y[ind],
                                          XA=XA_log[ind,], XN=XN_log[ind,],
                                          trim = switch(outcome, "ideation" = 0.01, "attempt" = 0.05),
-                                         allowable = FALSE)
+                                         allowable = TRUE)
   w_boot <- w_boot_obj$w_rmpw
   # w_boot <- w[ind]
   mu10_boot <- sum(Y[ind][G[ind] == 1] * w_boot[G[ind] == 1]) / sum(w_boot[G[ind] == 1])
@@ -148,9 +177,11 @@ out_resid <- unlist(lapply(out, function(x) x[["resid_boot"]]))
 out_red <- unlist(lapply(out, function(x) x[["red_boot"]]))
 
 quantile(out_red, c(0.025, 0.975)) # percentile bootstrap
-c(2*reduction - quantile(out_red, c(0.975, 0.025)), reduction) # pivot bootstrap
 mean(out_red) + c(-1, 1) * qnorm(0.975) * sd(out_red) # boot CI
+c(2*reduction - quantile(out_red, c(0.975, 0.025)), reduction) # pivot bootstrap
 
+
+reduction
 sd(out_red)
 mean(out_red)
 

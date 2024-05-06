@@ -30,7 +30,7 @@ Z_method <- "worry_upset"
 # aggregate
 # worry_upset
 
-outcome <- "attempt" # ideation or attempt
+outcome <- "ideation" # ideation or attempt
 
 df_x <- read_csv(paste0("../data/list1_X_", Z_method, "_", outcome, ".csv"))
 df_yz <- read_csv(paste0("../data/list1_YZGW_", Z_method, "_", outcome, ".csv"))
@@ -110,8 +110,7 @@ generatePlot <- function(num_cov_lbl = 8, num_pt_lbl = 3, psize = 6, estimand = 
   
   # return bounds and mu_10_hat
   amplification <- decompsens::decompAmplify(G, Z, XA, XN, Y, w, mu_10=mu10, 
-                                             Lambda = Lam, e1 = e1, e0 = e0, 
-                                             loco_weights = out_loco)
+                                             Lambda = Lam, e1 = e1, e0 = e0)
   bounds <- amplification$maxbias
   
   strongest_cov_df <- amplification[[1]] %>% drop_na()
