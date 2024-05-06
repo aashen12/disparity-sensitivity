@@ -137,7 +137,7 @@ residual
 getExtrema(G,Y,gamma = log(1.67), w = w, verbose = TRUE, estimand = "res")
 
 boot_ci_red <- bootstrapCI(G, Z, Y, XA_log, XN_log,
-                           gamma = log(1), trim = switch(outcome, "ideation" = 0.01, "attempt" = 0.05),
+                           gamma = log(1), trim = 0.05,
                            estimand = "red", stratify = TRUE,
                            allowable = TRUE)
 boot_ci_red
@@ -149,7 +149,7 @@ reduction
 mu10
 mu0
 bootstrapCI(G, Z, Y, XA_log, XN_log, gamma = log(1.7), 
-            trim = switch(outcome, "ideation" = 0.01, "attempt" = 0.05),
+            trim = 0.05,
             estimand = "point")
 
 
@@ -161,7 +161,7 @@ out <- parallel::mclapply(1:B, function(i) {
   ind <- c(ind_G1, ind_G0)
   w_boot_obj <- decompsens::estimateRMPW(G=G[ind], Z=Z[ind], Y=Y[ind],
                                          XA=XA_log[ind,], XN=XN_log[ind,],
-                                         trim = switch(outcome, "ideation" = 0.01, "attempt" = 0.05),
+                                         trim = 0.05,
                                          allowable = TRUE)
   w_boot <- w_boot_obj$w_rmpw
   # w_boot <- w[ind]
@@ -179,6 +179,10 @@ out_red <- unlist(lapply(out, function(x) x[["red_boot"]]))
 quantile(out_red, c(0.025, 0.975)) # percentile bootstrap
 mean(out_red) + c(-1, 1) * qnorm(0.975) * sd(out_red) # boot CI
 c(2*reduction - quantile(out_red, c(0.975, 0.025)), reduction) # pivot bootstrap
+
+quantile(out_resid, c(0.025, 0.975)) # percentile bootstrap
+mean(out_resid) + c(-1, 1) * qnorm(0.975) * sd(out_resid) # boot CI
+c(2*residual - quantile(out_resid, c(0.975, 0.025)), residual) # pivot bootstrap
 
 
 reduction
