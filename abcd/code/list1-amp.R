@@ -117,8 +117,7 @@ generatePlot <- function(num_cov_lbl = 8, num_pt_lbl = 3, psize = 6, estimand = 
   max_imbal_stnd <- amplification$max_imbal_stnd
   max_betau_01 <- amplification$max_beta
   
-  maxbias <- max(abs(bounds)) # 4/25/24 GNE: this is wrong. Max bias is larger due to scaling factors which must be accounted for,
-  
+  maxbias <- max(abs(bounds)) 
   max_betau_01 <- max(strongest_cov_df$coeff)
   max_imbal <- max(strongest_cov_df$imbal)
   
@@ -149,8 +148,6 @@ generatePlot <- function(num_cov_lbl = 8, num_pt_lbl = 3, psize = 6, estimand = 
   }
   
   bins <- bins[bins > 0]
-  
-  
   
   p1 <- df_plot %>%
     filter(beta >= 0) %>% 
@@ -222,7 +219,8 @@ generatePlot <- function(num_cov_lbl = 8, num_pt_lbl = 3, psize = 6, estimand = 
   }
 }
 
-red_plot <- generatePlot(num_cov_lbl = 6, psize = 4, estimand = "red"); resid_plot <- generatePlot(num_cov_lbl = 6, psize = 3.3, estimand = "resid")
+red_plot <- generatePlot(num_cov_lbl = 20, num_pt_lbl = 1, psize = 4, estimand = "red")
+resid_plot <- generatePlot(num_cov_lbl = 12, psize = 3.3, estimand = "resid")
 
 
 
