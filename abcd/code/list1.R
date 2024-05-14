@@ -131,7 +131,7 @@ getExtrema(G,Y,gamma = log(1), w = w, verbose = FALSE, estimand = "point")
 
 
 reduction
-getExtrema(G,Y,gamma = log(1.0), w = w, verbose = TRUE, estimand = "red")
+getExtrema(G,Y,gamma = log(1.09), w = w, verbose = TRUE, estimand = "red")
 
 residual
 getExtrema(G,Y,gamma = log(1.67), w = w, verbose = TRUE, estimand = "res")

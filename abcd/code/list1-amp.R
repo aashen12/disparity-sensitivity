@@ -219,8 +219,8 @@ generatePlot <- function(num_cov_lbl = 8, num_pt_lbl = 3, psize = 6, estimand = 
   }
 }
 
-red_plot <- generatePlot(num_cov_lbl = 20, num_pt_lbl = 1, psize = 4, estimand = "red")
-resid_plot <- generatePlot(num_cov_lbl = 12, psize = 3.3, estimand = "resid")
+red_plot <- generatePlot(num_cov_lbl = 20, num_pt_lbl = 1, psize = 5, estimand = "red")
+resid_plot <- generatePlot(num_cov_lbl = 12, psize = 5, estimand = "resid")
 
 
 
