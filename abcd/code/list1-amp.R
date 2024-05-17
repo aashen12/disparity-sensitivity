@@ -30,7 +30,7 @@ Z_method <- "worry_upset"
 # aggregate
 # worry_upset
 
-outcome <- "attempt" # ideation or attempt
+outcome <- "ideation" # ideation or attempt
 
 df_x <- read_csv(paste0("../data/list1_X_", Z_method, "_", outcome, ".csv"))
 df_yz <- read_csv(paste0("../data/list1_YZGW_", Z_method, "_", outcome, ".csv"))
@@ -98,7 +98,7 @@ generatePlot <- function(num_cov_lbl = 8, num_pt_lbl = 3, psize = 6, estimand = 
   
   # Assuming 'sequence' is your vector of numbers
   
-  cross_ind <- min(max(which(out$X1 >= 0)), # last positive index
+  cross_ind <- max(max(which(out$X1 >= 0)), # last positive index
                    min(which(out$X1 <= 0))) # first negative index
   
   Lam <- out$lam[cross_ind]
@@ -194,8 +194,10 @@ generatePlot <- function(num_cov_lbl = 8, num_pt_lbl = 3, psize = 6, estimand = 
     #geom_polygon(data = hull, aes(x = imbal, y = coeff, z = 0), alpha = 0.3, fill = "red") + 
     theme_minimal(base_size = 20) + 
     theme(plot.title = element_text(hjust = 0.5, face = "bold")) + 
-    labs(x = TeX("absolute standardized imbalance in $\\U$"), y = TeX("absolute $\\beta_u$"),
+    labs(x = TeX("$\\delta_u$ Imbalance"), y = TeX("$\\beta_u$ Impact"),
          title = paste0(title), color = c("Imbalance")) + 
+    # labs(x = TeX("absolute standardized imbalance in $\\U$"), y = TeX("absolute $\\beta_u$"),
+    #      title = paste0(title), color = c("Imbalance")) + 
     theme(legend.position = "bottom") + 
     #ylim(0, 1) + 
     geom_hline(yintercept = 0, color = "gray55") + scale_y_continuous(limits = c(0, NA))
