@@ -29,7 +29,7 @@ Z_method <- "worry_upset"
 # aggregate
 # worry_upset
 
-outcome <- "attempt" # ideation or attempt
+outcome <- "ideation" # ideation or attempt
 
 df_x <- read_csv(paste0("../data/list1_X_", Z_method, "_", outcome, ".csv"))
 df_yz <- read_csv(paste0("../data/list1_YZGW_", Z_method, "_", outcome, ".csv"))
@@ -130,26 +130,34 @@ getExtrema(G,Y,gamma = log(1), w = w, verbose = FALSE, estimand = "point")
 
 
 reduction
-getExtrema(G,Y,gamma = log(1.09), w = w, verbose = TRUE, estimand = "red")
+getExtrema(G,Y,gamma = log(1.08), w = w, verbose = TRUE, estimand = "red")
 
 residual
 getExtrema(G,Y,gamma = log(1.67), w = w, verbose = TRUE, estimand = "res")
 
+
+e0_raw <- glm(Z ~ ., data = df_allowable, family = binomial(link = "logit"), weights = (1-G))$fitted.values
+e1_raw <- glm(Z ~ ., data = cbind(df_allowable, df_non_allowable), family = binomial(link = "logit"), weights = G)$fitted.values
+
+
+trim0 <- 1 - quantile(e0_raw, 0.99, names = FALSE)
+trim1 <- switch(outcome, 
+                "ideation" = 1 - quantile(e1_raw, 0.93, names = FALSE),
+                "attempt" = 1 - quantile(e1_raw, 0.90, names = FALSE))
+
+
 boot_ci_red <- bootstrapCI(G, Z, Y, XA_log, XN_log,
-                           gamma = log(1), trim = 0.05,
+                           gamma = log(1), trim0 = trim0, trim1 = trim1,
                            estimand = "red", stratify = TRUE,
                            allowable = TRUE)
-boot_ci_red
-reduction
-
-
 
 # Want to find Lambda such that mu10 = mu0. # 1.3 for ideation, 1.7 for attempt
 mu10
 mu0
 bootstrapCI(G, Z, Y, XA_log, XN_log, gamma = log(1.7), 
-            trim = 0.05,
+            trim0 = trim0, trim1 = trim1,
             estimand = "point")
+
 
 
 
@@ -160,7 +168,7 @@ out <- parallel::mclapply(1:B, function(i) {
   ind <- c(ind_G1, ind_G0)
   w_boot_obj <- decompsens::estimateRMPW(G=G[ind], Z=Z[ind], Y=Y[ind],
                                          XA=XA_log[ind,], XN=XN_log[ind,],
-                                         trim = 0.05,
+                                         trim0 = trim0, trim1 = trim1,
                                          allowable = TRUE)
   w_boot <- w_boot_obj$w_rmpw
   # w_boot <- w[ind]
@@ -176,6 +184,7 @@ out_resid <- unlist(lapply(out, function(x) x[["resid_boot"]]))
 out_red <- unlist(lapply(out, function(x) x[["red_boot"]]))
 
 quantile(out_red, c(0.025, 0.975)) # percentile bootstrap
+reduction
 mean(out_red) + c(-1, 1) * qnorm(0.975) * sd(out_red) # boot CI
 c(2*reduction - quantile(out_red, c(0.975, 0.025)), reduction) # pivot bootstrap
 
@@ -217,7 +226,7 @@ p_extrema <- out %>%
   geom_hline(yintercept = mu10, color = "red", linewidth = 1) +
   theme_minimal(base_size = 25)
 
-
+# 05/19
 # make one for point estimate!!
 
 p_extrema
