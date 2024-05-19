@@ -58,7 +58,7 @@ non_allowable_covs <- setdiff(names(df_x)[!names(df_x) %in% mediators], allowabl
 df_allowable <- model.matrix(~ .^2 -1, data = df_x %>% select(all_of(allowable_covs))) %>% 
   data.frame() %>% NAImpute() %>% tibble()
 
-df_non_allowable <- model.matrix(~ . -1, data = df_x %>% select(all_of(non_allowable_covs))) %>% 
+df_non_allowable <- model.matrix(~ .^2 -1, data = df_x %>% select(all_of(non_allowable_covs))) %>% 
   data.frame() %>% NAImpute() %>% tibble()
 
 if (interact == TRUE) {
@@ -164,7 +164,7 @@ df_e1 <- cbind(Z, by = G, df_non_allowable, df_allowable)
 
 e0_obj <- weightit(Z ~ . - by, data = df_e0, method = "glm", by = "by") #%>% trim(at = 2, lower = TRUE)
 e1_obj <- weightit(Z ~ . - by,
-                   data = df_e1, method = "glm", by = "by") #%>% trim(at = 25, lower = TRUE)
+                   data = df_e1, method = "glm", by = "by") %>% trim(at = 25, lower = TRUE)
 
 
 
