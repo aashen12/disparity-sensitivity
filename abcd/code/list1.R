@@ -29,7 +29,7 @@ Z_method <- "worry_upset"
 # aggregate
 # worry_upset
 
-outcome <- "ideation" # ideation or attempt
+outcome <- "attempt" # ideation or attempt
 
 df_x <- read_csv(paste0("../data/list1_X_", Z_method, "_", outcome, ".csv"))
 df_yz <- read_csv(paste0("../data/list1_YZGW_", Z_method, "_", outcome, ".csv"))
@@ -72,14 +72,13 @@ mu1 <- mean(Y[G == 1])
 mu0 <- mean(Y[G == 0])
 
 mean(Z[G == 1]) - mean(Z[G == 0])
-
 mean(Z[G == 1]) / mean(Z[G == 0])
-
-
 
 
 mu1
 mu0
+
+
 obs_disp <- mu1 - mu0
 obs_disp
 mean(Y[G == 1]) - mean(Y[G == 0])

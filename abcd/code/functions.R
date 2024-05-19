@@ -77,7 +77,7 @@ lovePlot <- function(pre_weight, post_weight, num_covs = 100, title = "Covariate
     geom_vline(xintercept = 0, linetype = "dotted") +
     geom_vline(xintercept = 0.1, linetype = "dashed", color = "green") +
     labs(title = title, x = "Absolute Mean Difference", y = "", color = "Sample") +
-    scale_x_continuous(limits = c(0, 1)) + # Set x-axis limits
+    #scale_x_continuous(limits = c(0, 1)) + # Set x-axis limits
     theme(legend.position = "bottom") + 
     theme(plot.title = element_text(hjust = 0.5)) #+ coord_flip()
 }

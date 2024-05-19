@@ -8,9 +8,12 @@ library(doParallel)
 library(boot)
 library(cobalt)
 library(latex2exp)
+library(WeightIt)
+library(lsr)
 
 source("functions.R")
 set.seed(122357)
+
 
 numCores <- parallel::detectCores()
 
@@ -25,7 +28,7 @@ Z_method <- "worry_upset"
 # aggregate
 # worry_upset
 
-outcome <- "attempt" # ideation or attempt
+outcome <- "ideation" # ideation or attempt
 
 
 interact <- FALSE
@@ -55,7 +58,7 @@ non_allowable_covs <- setdiff(names(df_x)[!names(df_x) %in% mediators], allowabl
 df_allowable <- model.matrix(~ .^2 -1, data = df_x %>% select(all_of(allowable_covs))) %>% 
   data.frame() %>% NAImpute() %>% tibble()
 
-df_non_allowable <- model.matrix(~ .^2 -1, data = df_x %>% select(all_of(non_allowable_covs))) %>% 
+df_non_allowable <- model.matrix(~ . -1, data = df_x %>% select(all_of(non_allowable_covs))) %>% 
   data.frame() %>% NAImpute() %>% tibble()
 
 if (interact == TRUE) {
@@ -84,125 +87,134 @@ df_yz %>% group_by(sex_min) %>%
     sd_parent_accept = sd(parent_accept, na.rm = FALSE)
   )
 
-allow <- TRUE
-
-weight_object <- decompsens::estimateRMPW(G=G, Z=Z, Y=Y, XA=df_allowable, XN=df_non_allowable,
-                              trim = switch(outcome, "ideation" = 0.05, "attempt" = 0.05), 
-                              allowable = allow)
-
-
-w <- weight_object$w_rmpw
-e1 <- weight_object$e1
-e0 <- weight_object$e0
-
-w1 <- glm(G ~ 1, data = df_allowable, family = binomial(link = "logit"))$fitted.values / 
-  glm(G ~ ., data = df_allowable, family = binomial(link = "logit"))$fitted.values
-w0 <- glm(1 - G ~ 1, data = df_allowable, family = binomial(link = "logit"))$fitted.values / 
-  glm(1 - G ~ ., data = df_allowable, family = binomial(link = "logit"))$fitted.values
-
-summary(w)
-
-df_yz <- df_yz %>% mutate(w_rmpw = w,
-                          e1 = e1,
-                          e0 = e0,)
-write_csv(df_yz, paste0("../data/list1_YZGW_", Z_method, "_", outcome, ".csv"))
-
-message(paste0("CSV file for Z method ", Z_method, " and outcome ", outcome, " has been written."))
-
-
-
 X_plot <- cbind(model.matrix(~ .^2 -1, data = df_x %>% select(all_of(allowable_covs))),
                 model.matrix(~ .^2 -1, data = df_x %>% select(all_of(non_allowable_covs)))) %>% NAImpute()
 
-# X_plot <- cbind(model.matrix(~ . -1, data = df_x %>% select(all_of(allowable_covs))),
-#                 model.matrix(~ . -1, data = df_x %>% select(all_of(non_allowable_covs)))) %>% NAImpute()
+allow <- TRUE
+
+e0 <- glm(Z ~ ., data = df_allowable, family = binomial(link = "logit"), weights = 1-G)$fitted.values
+e1 <- glm(Z ~ ., data = cbind(df_allowable, df_non_allowable), family = binomial(link = "logit"), weights = G)$fitted.values
 
 
-X_stnd <- apply(X_plot, 2, scale) %>% data.frame()
+trim0 <- 0.05
+trim1 <- 0.1
+
+e0 <- pmax(pmin(e0, 1 - trim0), trim0)
+e1 <- pmax(pmin(e1, 1 - trim1), trim1)
 
 
-pre_weight_G <- colMeans(X_stnd[G == 1, ]) - colMeans(X_stnd[G == 0, ])
-max(abs(pre_weight_G))
-
-# post_weight_G <- colSums(X_stnd[G == 1, ] * w[G == 1]) / sum(w[G == 1]) - 
-#   colSums(X_stnd[G == 0, ] * w[G == 0])  / sum(w[G == 0])
-# lovePlot(pre_weight_G, post_weight_G, title = "Covariate Balance wrt Sexual Minority Status")
-
-post_weight_G <- colSums(X_stnd[G == 1, ] * w[G == 1]) / sum(w[G == 1]) - colMeans(X_stnd[G == 1, ])
-lovePlot(pre_weight_G, post_weight_G, title = "Covariate Balance between SM and weighted SM")
-
-
-pre_weight_Z <- colMeans(X_stnd[Z == 1, ]) - colMeans(X_stnd[Z == 0, ])
-pre_weight_Z <- colSums(X_stnd[Z == 1, ] * w1[Z == 1] / sum(w1[Z == 1])) - 
-  colSums(X_stnd[Z == 0, ] * w0[Z == 0] / sum(w0[Z == 0]))
-max(abs(pre_weight_Z))
-
-post_weight_Z <- colSums(X_stnd[Z == 1, ] * w[Z == 1] / sum(w[Z == 1])) - colMeans(X_stnd[Z == 0, ])
-max(abs(post_weight_Z))
-
-#XG1 <- X_stnd[G == 1, ]
-XG1_stnd <- apply(X_plot[G == 1, ], 2, scale)
-XG1_w <- apply(XG1_stnd, 2, function(x) x * w[G == 1] / sum(w[G == 1]))
-
-# compute scaling factors 
-sf <- ((e0 - e1) / (1 - e1))[G == 1] #%>% abs()
-length(sf)
-dim(XG1_stnd)
-X_sf <- apply(XG1_stnd, 2, function(x) x * (sf) / sum(abs(sf)))
-
-ZG1 <- Z[G == 1]
-sum(ZG1)
-
-sf_Z1 <- ((e0 - e1) / (e1 - e1^2))[G == 1 & Z == 1] #%>% abs()
-dim(XG1_stnd[ZG1 == 1, ])
-length(sf_Z1)
-X_sf_Z1 <- apply(XG1_stnd[ZG1 == 1, ], 2, function(x) x * (sf_Z1) / sum(abs(sf_Z1)))
-
-
-pre_weight_Z <- colMeans(XG1_stnd) - colMeans(XG1_stnd[ZG1 == 1, ])
-post_weight_Z <- colSums(XG1_w) - colSums(XG1_w[ZG1 == 1, ])
-post_weight_Z <- colMeans(XG1_stnd) - colSums(XG1_w[ZG1 == 1, ])
-post_weight_Z <- colSums(X_sf) - colSums(X_sf_Z1)
-
-loveZ <- lovePlot(pre_weight_Z, post_weight_Z, 
-                  title = "Covariate Balance between all SM and treated SM")
-loveZ
-
-
-pre_weight_G <- colMeans(XG1_stnd) - colMeans(XG1_stnd[ZG1 == 1, ])
-post_weight_G <- colSums(XG1_w) - colSums(XG1_w[ZG1 == 1, ])
-lovePlot(pre_weight_G, post_weight_G, title = "Covariate Balance between SM and weighted SM")
-
-
-### Using SMD ###
-pre_weight_msd <- (colMeans(X_plot[G == 1, ]) - colMeans(X_plot[G == 1 & Z == 1, ])) / 
-  sqrt(
-    (apply(X_plot[G == 1, ], 2, var) + apply(X_plot[G == 1 & Z == 1, ], 2, var)) / 2
-  )
-
-X_sf_smd <- apply(X_stnd[G == 1, ], 2, function(x) x * abs(sf) / sum(abs(sf)))
-X_sf_Z1_smd <- apply(X_stnd[G == 1 & Z == 1, ], 2, function(x) x * abs(sf_Z1) / sum(abs(sf_Z1)))
-
-post_weight_msd_num <- colSums(X_sf_smd) - colSums(X_sf_Z1_smd)
-
-weighted_var <- function(x, w) {
+weighted.var <- function(x, w) {
   w <- abs(w)
-  xbar_w <- sum(x * w) / sum(w)
+  xbar_w <- weighted.mean(x, w)
   coef <- sum(w) / ( (sum(w))^2 - sum(w^2) )
   coef * sum(w * (x - xbar_w)^2)
 }
 
+## For e_0 ###
 
-post_weight_msd_denom <- sqrt(
-  (apply(X_stnd[G == 1, ], 2, weighted_var, w = sf) + 
-     apply(X_stnd[G == 1 & Z == 1, ], 2, weighted_var, w = sf_Z1)) / 2
-)
+pre_weight_e0 <- apply(df_allowable, 2, function(col) {
+  abs(cohensD(col[G == 0 & Z == 1], col[G == 0 & Z == 0]))
+})
 
-post_weight_msd <- post_weight_msd_num / post_weight_msd_denom
-names(post_weight_msd) <- names(pre_weight_msd)
+post_weight_e0 <- apply(df_allowable, 2, function(col) {
+  num <- weighted.mean(col[G == 0 & Z == 1], 1/e0[G == 0 & Z == 1]) - weighted.mean(col[G == 0 & Z == 0], 1/e0[G == 0 & Z == 0])
+  den <- sqrt(weighted.var(col[G == 0 & Z == 1], 1/e0[G == 0 & Z == 1]) + 
+                weighted.var(col[G == 0 & Z == 0], 1/e0[G == 0 & Z == 0])) / sqrt(2)
+  abs(num / den)
+})
 
-lovePlot(pre_weight_msd, post_weight_msd, title = "Covariate Balance wrt SM and treated SM")
+lovePlot(pre_weight_e0, post_weight_e0)
+
+
+### For e_1 ###
+
+pre_weight_e1 <- apply(X_plot, 2, function(col) {
+  abs(cohensD(col[G == 1 & Z == 1], col[G == 1 & Z == 0]))
+})
+
+post_weight_e1 <- apply(X_plot, 2, function(col) {
+  num <- weighted.mean(col[G == 1 & Z == 1], 1/e1[G == 1 & Z == 1]) - weighted.mean(col[G == 1 & Z == 0], 1/e1[G == 1 & Z == 0])
+  den <- sqrt(weighted.var(col[G == 1 & Z == 1], 1/e1[G == 1 & Z == 1]) + 
+                weighted.var(col[G == 1 & Z == 0], 1/e1[G == 1 & Z == 0])) / sqrt(2)
+  abs(num / den)
+})
+
+lovePlot(pre_weight_e1, post_weight_e1)
+
+w1 = e0 / e1
+w0 = (1 - e0) / (1 - e1)
+w_rmpw = w1 * Z + w0 * (1 - Z)
+
+df_yz <- df_yz %>% mutate(w_rmpw = w_rmpw,
+                          e1 = e1,
+                          e0 = e0)
+write_csv(df_yz, paste0("../data/list1_YZGW_", Z_method, "_", outcome, ".csv"))
+message(paste0("CSV file for Z method ", Z_method, " and outcome ", outcome, " has been written."))
 
 
 
 
+
+# Using WeightIt and Cobalt
+
+set.cobalt.options(binary = "std")
+
+df_e0 <- cbind(Z, by = 1-G, df_allowable)
+df_e1 <- cbind(Z, by = G, df_non_allowable, df_allowable)
+
+e0_obj <- weightit(Z ~ . - by, data = df_e0, method = "glm", by = "by") #%>% trim(at = 2, lower = TRUE)
+e1_obj <- weightit(Z ~ . - by,
+                   data = df_e1, method = "glm", by = "by") #%>% trim(at = 25, lower = TRUE)
+
+
+
+love.plot(e1_obj, drop.distance = TRUE, 
+          var.order = "unadjusted",
+          abs = TRUE, line = TRUE,
+          thresholds = c(m = 0.1), size = 4)
+
+
+love.plot(e0_obj, drop.distance = TRUE, 
+          var.order = "unadjusted",
+          abs = TRUE, line = TRUE,
+          thresholds = c(m = 0.1),
+          size = 6)
+
+summary(e0_obj)
+summary(e1_obj)
+
+bal.tab(e0_obj, un = TRUE, thresholds = c(m = 0.1))
+bal.tab(e1_obj, un = TRUE, thresholds = c(m = 0.1))
+
+e0 <- 1 / e0_obj$weights
+e1 <- 1 / e1_obj$weights
+
+summary(e1)
+
+w_rmpw <- (e0 / e1) * Z + ((1-e0) / (1-e1)) * (1-Z)
+
+
+summary(w_rmpw[G == 1])
+
+# df_yz <- df_yz %>% mutate(w_rmpw = w_rmpw,
+#                           e1 = e1,
+#                           e0 = e0)
+# write_csv(df_yz, paste0("../data/list1_YZGW_", Z_method, "_", outcome, ".csv"))
+# message(paste0("CSV file for Z method ", Z_method, " and outcome ", outcome, " has been written."))
+
+
+
+# weight_object <- decompsens::estimateRMPW(G=G, Z=Z, Y=Y, XA=df_allowable, XN=df_non_allowable,
+#                               trim = switch(outcome, "ideation" = 0.05, "attempt" = 0.05), 
+#                               allowable = allow)
+# 
+# 
+# 
+# w <- weight_object$w_rmpw
+# e1 <- weight_object$e1
+# e0 <- weight_object$e0
+
+# w1 <- glm(G ~ 1, data = df_allowable, family = binomial(link = "logit"))$fitted.values / 
+#   glm(G ~ ., data = df_allowable, family = binomial(link = "logit"))$fitted.values
+# w0 <- glm(1 - G ~ 1, data = df_allowable, family = binomial(link = "logit"))$fitted.values / 
+#   glm(1 - G ~ ., data = df_allowable, family = binomial(link = "logit"))$fitted.values
