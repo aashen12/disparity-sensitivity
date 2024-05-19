@@ -28,7 +28,7 @@ Z_method <- "worry_upset"
 # aggregate
 # worry_upset
 
-outcome <- "ideation" # ideation or attempt
+outcome <- "attempt" # ideation or attempt
 
 
 interact <- FALSE
@@ -58,7 +58,7 @@ non_allowable_covs <- setdiff(names(df_x)[!names(df_x) %in% mediators], allowabl
 df_allowable <- model.matrix(~ .^2 -1, data = df_x %>% select(all_of(allowable_covs))) %>% 
   data.frame() %>% NAImpute() %>% tibble()
 
-df_non_allowable <- model.matrix(~ .^2 -1, data = df_x %>% select(all_of(non_allowable_covs))) %>% 
+df_non_allowable <- model.matrix(~ . -1, data = df_x %>% select(all_of(non_allowable_covs))) %>% 
   data.frame() %>% NAImpute() %>% tibble()
 
 if (interact == TRUE) {
@@ -88,23 +88,26 @@ df_yz %>% group_by(sex_min) %>%
   )
 
 X_plot <- cbind(model.matrix(~ .^2 -1, data = df_x %>% select(all_of(allowable_covs))),
-                model.matrix(~ .^2 -1, data = df_x %>% select(all_of(non_allowable_covs)))) %>% NAImpute()
+                model.matrix(~ . -1, data = df_x %>% select(all_of(non_allowable_covs)))) %>% NAImpute()
 
 allow <- TRUE
 
-e0 <- glm(Z ~ ., data = df_allowable, family = binomial(link = "logit"), weights = 1-G)$fitted.values
-e1 <- glm(Z ~ ., data = cbind(df_allowable, df_non_allowable), family = binomial(link = "logit"), weights = G)$fitted.values
+e0_raw <- glm(Z ~ ., data = df_allowable, family = binomial(link = "logit"), weights = (1-G))$fitted.values
+e1_raw <- glm(Z ~ ., data = cbind(df_allowable, df_non_allowable), family = binomial(link = "logit"), weights = G)$fitted.values
 
 
-trim0 <- 0.05
-trim1 <- 0.1
+trim0 <- 1 - quantile(e0_raw, 0.99, names = FALSE)
+trim1 <- switch(outcome, 
+                "ideation" = 1 - quantile(e1_raw, 0.93, names = FALSE),
+                "attempt" = 1 - quantile(e1_raw, 0.90, names = FALSE))
 
-e0 <- pmax(pmin(e0, 1 - trim0), trim0)
-e1 <- pmax(pmin(e1, 1 - trim1), trim1)
+
+e0 <- pmax(pmin(e0_raw, 1 - trim0), trim0)
+e1 <- pmax(pmin(e1_raw, 1 - trim1), trim1)
 
 
 weighted.var <- function(x, w) {
-  w <- abs(w)
+  #w <- abs(w)
   xbar_w <- weighted.mean(x, w)
   coef <- sum(w) / ( (sum(w))^2 - sum(w^2) )
   coef * sum(w * (x - xbar_w)^2)
@@ -117,10 +120,11 @@ pre_weight_e0 <- apply(df_allowable, 2, function(col) {
 })
 
 post_weight_e0 <- apply(df_allowable, 2, function(col) {
-  num <- weighted.mean(col[G == 0 & Z == 1], 1/e0[G == 0 & Z == 1]) - weighted.mean(col[G == 0 & Z == 0], 1/e0[G == 0 & Z == 0])
-  den <- sqrt(weighted.var(col[G == 0 & Z == 1], 1/e0[G == 0 & Z == 1]) + 
-                weighted.var(col[G == 0 & Z == 0], 1/e0[G == 0 & Z == 0])) / sqrt(2)
-  abs(num / den)
+  num <- weighted.mean(col[G == 0 & Z == 1], 1/(e0[G == 0 & Z == 1])) - 
+    weighted.mean(col[G == 0 & Z == 0], 1/(e0[G == 0 & Z == 0]))
+  den <- sqrt(weighted.var(col[G == 0 & Z == 1], 1/(e0[G == 0 & Z == 1])) + 
+                weighted.var(col[G == 0 & Z == 0], 1/(e0[G == 0 & Z == 0]))) * sqrt(0.5)
+  abs(num) / den
 })
 
 lovePlot(pre_weight_e0, post_weight_e0)
@@ -136,14 +140,18 @@ post_weight_e1 <- apply(X_plot, 2, function(col) {
   num <- weighted.mean(col[G == 1 & Z == 1], 1/e1[G == 1 & Z == 1]) - weighted.mean(col[G == 1 & Z == 0], 1/e1[G == 1 & Z == 0])
   den <- sqrt(weighted.var(col[G == 1 & Z == 1], 1/e1[G == 1 & Z == 1]) + 
                 weighted.var(col[G == 1 & Z == 0], 1/e1[G == 1 & Z == 0])) / sqrt(2)
-  abs(num / den)
+  abs(num) / den
 })
 
 lovePlot(pre_weight_e1, post_weight_e1)
 
+summary(e1)
+
 w1 = e0 / e1
 w0 = (1 - e0) / (1 - e1)
 w_rmpw = w1 * Z + w0 * (1 - Z)
+
+summary(w_rmpw[G == 1 & Y == 1])
 
 df_yz <- df_yz %>% mutate(w_rmpw = w_rmpw,
                           e1 = e1,
@@ -152,19 +160,32 @@ write_csv(df_yz, paste0("../data/list1_YZGW_", Z_method, "_", outcome, ".csv"))
 message(paste0("CSV file for Z method ", Z_method, " and outcome ", outcome, " has been written."))
 
 
+# should be equiv
+e0_noby <- weightit(Z ~ ., data = df_allowable, method = "glm") #%>% trim(at = 2, lower = TRUE)
+e0_test <- glm(Z ~ ., data = df_allowable, family = binomial(link = "logit"))$fitted.values
+summary(e0_noby$ps - e0_test)
 
+
+##################################################################
+##################################################################
+##################################################################
 
 
 # Using WeightIt and Cobalt
 
 set.cobalt.options(binary = "std")
 
-df_e0 <- cbind(Z, by = 1-G, df_allowable)
-df_e1 <- cbind(Z, by = G, df_non_allowable, df_allowable)
+df_e0 <- cbind(Z = Z, by = factor(1-G), df_allowable)
+df_e1 <- cbind(Z = Z, by = G, df_non_allowable, df_allowable)
 
 e0_obj <- weightit(Z ~ . - by, data = df_e0, method = "glm", by = "by") #%>% trim(at = 2, lower = TRUE)
+# by computes propensity scores within each group of by; different from weights in glm()
 e1_obj <- weightit(Z ~ . - by,
                    data = df_e1, method = "glm", by = "by") %>% trim(at = 25, lower = TRUE)
+
+hist(abs(e0_obj$ps[G == 0] - e0[G == 0]))
+
+
 
 
 
@@ -179,8 +200,16 @@ love.plot(e0_obj, drop.distance = TRUE,
           abs = TRUE, line = TRUE,
           thresholds = c(m = 0.1),
           size = 6)
+love.plot(e0_noby, drop.distance = TRUE, 
+          var.order = "unadjusted",
+          abs = TRUE, line = TRUE,
+          thresholds = c(m = 0.1),
+          size = 6)
+
+
 
 summary(e0_obj)
+summary(e0_noby)
 summary(e1_obj)
 
 bal.tab(e0_obj, un = TRUE, thresholds = c(m = 0.1))
