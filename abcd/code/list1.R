@@ -29,7 +29,7 @@ Z_method <- "worry_upset"
 # aggregate
 # worry_upset
 
-outcome <- "attempt" # ideation or attempt
+outcome <- "ideation" # ideation or attempt
 
 df_x <- read_csv(paste0("../data/list1_X_", Z_method, "_", outcome, ".csv"))
 df_yz <- read_csv(paste0("../data/list1_YZGW_", Z_method, "_", outcome, ".csv"))

@@ -66,6 +66,10 @@ mu0 <- mean(Y[G == 0])
 
 mu10 <- weighted.mean(Y[G == 1], w[G == 1])
 
+mu1
+mu10
+mu0
+
 XA <- model.matrix(~ . -1, data = df_x %>% select(all_of(allowable_covs))) %>% NAImpute()
 XA <- XA[, !grepl(":.*NA$", colnames(XA))]
 XN <- model.matrix(~ . -1, data = df_x %>% select(all_of(non_allowable_covs))) %>% NAImpute()
@@ -170,7 +174,7 @@ generatePlot <- function(num_cov_lbl = 8, num_pt_lbl = 3, psize = 6, estimand = 
   strongest_cov_df_long <- strongest_cov_df %>% 
     pivot_longer(cols = c("imbal", "imbal_wt"), names_to = "imbal_type", values_to = "imbal_val") #%>% filter(imbal_type == "imbal_wt")
   
-  num_cov <- min(nrow(strongest_cov_df), num_cov_lbl * 2)
+  num_cov <- min(nrow(strongest_cov_df), num_cov_lbl) * 2
   p1_full <- p1 + geom_point(data = (strongest_cov_df_long %>% filter(covar %in% non_allowable_covs) %>% slice(1:num_cov)), 
                              aes(x = imbal_val, y = coeff, z = 0, color = imbal_type), size = psize) + 
     scale_color_manual(labels = c("imbal" = "Pre-wt", "imbal_wt" = "Post-wt"),
@@ -221,7 +225,7 @@ generatePlot <- function(num_cov_lbl = 8, num_pt_lbl = 3, psize = 6, estimand = 
   }
 }
 
-red_plot <- generatePlot(num_cov_lbl = 20, num_pt_lbl = 1, psize = 5, estimand = "red")
+red_plot <- generatePlot(num_cov_lbl = 11, num_pt_lbl = 3, psize = 5, estimand = "red")
 resid_plot <- generatePlot(num_cov_lbl = 12, psize = 5, estimand = "resid")
 
 
