@@ -147,8 +147,8 @@ trim1 <- switch(outcome,
 
 
 boot_ci_red <- bootstrapCI(G, Z, Y, XA_log, XN_log,
-                           gamma = log(1.01), trim0 = trim0, trim1 = trim1,
-                           estimand = "red", stratify = TRUE,
+                           gamma = log(1.02), trim0 = trim0, trim1 = trim1,
+                           estimand = "red", stratify = FALSE, alpha = 0.05,
                            allowable = TRUE)
 boot_ci_red
 
@@ -157,16 +157,16 @@ mu10
 mu0
 bootstrapCI(G, Z, Y, XA_log, XN_log, gamma = log(1), 
             trim0 = trim0, trim1 = trim1,
-            estimand = "point")
+            estimand = "point", alpha = 0.1)
 
 
 
 
 out <- parallel::mclapply(1:B, function(i) {
-  # ind <- sample(1:length(Y), length(Y), replace = TRUE)
-  ind_G1 <- sample(which(G == 1), sum(G == 1), replace = TRUE)
-  ind_G0 <- sample(which(G == 0), sum(G == 0), replace = TRUE)
-  ind <- c(ind_G1, ind_G0)
+  ind <- sample(1:length(Y), length(Y), replace = TRUE)
+  # ind_G1 <- sample(which(G == 1), sum(G == 1), replace = TRUE)
+  # ind_G0 <- sample(which(G == 0), sum(G == 0), replace = TRUE)
+  # ind <- c(ind_G1, ind_G0)
   w_boot_obj <- decompsens::estimateRMPW(G=G[ind], Z=Z[ind], Y=Y[ind],
                                          XA=XA_log[ind,], XN=XN_log[ind,],
                                          trim0 = trim0, trim1 = trim1,

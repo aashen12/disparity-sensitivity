@@ -75,7 +75,7 @@ XA <- XA[, !grepl(":.*NA$", colnames(XA))]
 XN <- model.matrix(~ . -1, data = df_x %>% select(all_of(non_allowable_covs))) %>% NAImpute()
 XN <- XN[, !grepl(":.*NA$", colnames(XN))]
 
-generatePlot <- function(num_cov_lbl = 8, num_pt_lbl = 3, psize = 6, estimand = "resid") {
+generatePlot <- function(num_cov_lbl = 8, num_pt_lbl = 3, psize = 6, estimand = "reduction") {
   
   if (estimand == "resid" | estimand == "residual") {
     estimand <- "residual"
