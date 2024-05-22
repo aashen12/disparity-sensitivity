@@ -175,15 +175,14 @@ summary(e0_noby$ps - e0_test)
 
 set.cobalt.options(binary = "std")
 
-df_e0 <- cbind(Z = Z, by = factor(1-G), df_allowable)
-df_e1 <- cbind(Z = Z, by = G, df_non_allowable, df_allowable)
+df_e0 <- cbind(Z = Z, by = G, df_allowable) %>% filter(by == 0)
+df_e1 <- cbind(Z = Z, by = G, df_non_allowable, df_allowable) %>% filter(by == 1)
 
-e0_obj <- weightit(Z ~ . - by, data = df_e0, method = "glm", by = "by") #%>% trim(at = 2, lower = TRUE)
+e0_obj <- weightit(Z ~ . - by, data = df_e0, method = "ebal") #%>% trim(at = 2, lower = TRUE)
 # by computes propensity scores within each group of by; different from weights in glm()
 e1_obj <- weightit(Z ~ . - by,
-                   data = df_e1, method = "glm", by = "by") %>% trim(at = 25, lower = TRUE)
+                   data = df_e1, method = "ebal") #%>% trim(at = 25, lower = TRUE)
 
-hist(abs(e0_obj$ps[G == 0] - e0[G == 0]))
 
 
 
@@ -200,13 +199,6 @@ love.plot(e0_obj, drop.distance = TRUE,
           abs = TRUE, line = TRUE,
           thresholds = c(m = 0.1),
           size = 6)
-love.plot(e0_noby, drop.distance = TRUE, 
-          var.order = "unadjusted",
-          abs = TRUE, line = TRUE,
-          thresholds = c(m = 0.1),
-          size = 6)
-
-
 
 summary(e0_obj)
 summary(e0_noby)
@@ -214,6 +206,8 @@ summary(e1_obj)
 
 bal.tab(e0_obj, un = TRUE, thresholds = c(m = 0.1))
 bal.tab(e1_obj, un = TRUE, thresholds = c(m = 0.1))
+
+bal.plot(e1_obj)
 
 e0 <- 1 / e0_obj$weights
 e1 <- 1 / e1_obj$weights

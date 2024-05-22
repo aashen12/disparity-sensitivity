@@ -29,7 +29,7 @@ Z_method <- "worry_upset"
 # aggregate
 # worry_upset
 
-outcome <- "ideation" # ideation or attempt
+outcome <- "attempt" # ideation or attempt
 
 df_x <- read_csv(paste0("../data/list1_X_", Z_method, "_", outcome, ".csv"))
 df_yz <- read_csv(paste0("../data/list1_YZGW_", Z_method, "_", outcome, ".csv"))
@@ -130,7 +130,7 @@ getExtrema(G,Y,gamma = log(1), w = w, verbose = FALSE, estimand = "point")
 
 
 reduction
-getExtrema(G,Y,gamma = log(1.08), w = w, verbose = TRUE, estimand = "red")
+getExtrema(G,Y,gamma = log(1.09), w = w, verbose = TRUE, estimand = "red")
 
 residual
 getExtrema(G,Y,gamma = log(1.67), w = w, verbose = TRUE, estimand = "res")
@@ -147,14 +147,15 @@ trim1 <- switch(outcome,
 
 
 boot_ci_red <- bootstrapCI(G, Z, Y, XA_log, XN_log,
-                           gamma = log(1), trim0 = trim0, trim1 = trim1,
+                           gamma = log(1.01), trim0 = trim0, trim1 = trim1,
                            estimand = "red", stratify = TRUE,
                            allowable = TRUE)
+boot_ci_red
 
 # Want to find Lambda such that mu10 = mu0. # 1.3 for ideation, 1.7 for attempt
 mu10
 mu0
-bootstrapCI(G, Z, Y, XA_log, XN_log, gamma = log(1.7), 
+bootstrapCI(G, Z, Y, XA_log, XN_log, gamma = log(1), 
             trim0 = trim0, trim1 = trim1,
             estimand = "point")
 
