@@ -50,8 +50,8 @@ options(na.action='na.pass')
 
 #mediators <- c("peer_victimization")
 mediators <- c("src_subject_id", "family_mental_health")
-allowable_covs <- c("age", "sex", "sib_order", "sib_num")
-# allowable_covs <- c("age", "sex")
+# allowable_covs <- c("age", "sex", "sib_order", "sib_num")
+allowable_covs <- c("age", "sex")
 #allowable_covs <- c("age", "sex", "sib_num", "sib_order", "income", "adi")
 non_allowable_covs <- setdiff(names(df_x)[!names(df_x) %in% mediators], allowable_covs)
 

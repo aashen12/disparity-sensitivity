@@ -96,17 +96,22 @@ mu10 <- weighted.mean(Y[G == 1], w[G == 1])
 mu1_AS <- lm(Y ~ df_allowable$age + df_allowable$sexF, weights = G)$fitted.values %>% mean()
 mu0_AS <- lm(Y ~ df_allowable$age + df_allowable$sexF, weights = 1-G)$fitted.values %>% mean()
 
-mu1_AS
-mu0_AS
+mu1_AS-mu0_AS
 
 
 mu1
+c(mu1 - qnorm(0.975) * sqrt(mean(Y[G == 1]) * (1 - mean(Y[G == 1])) / length(Y[G == 1])),
+  mu1 + qnorm(0.975) * sqrt(mean(Y[G == 1]) * (1 - mean(Y[G == 1]))) / length(Y[G == 1]))
 mu10
 mu0
 
 
 
 obs_disp
+sd_diff <- sqrt((mu1 * (1 - mu1) / length(Y[G == 1])) + (mu0 * (1 - mu0) / length(Y[G == 0])))
+sd_diff
+ci_obs_disp <- c(obs_disp - qnorm(0.975) * sd_diff, obs_disp + qnorm(0.975) * sd_diff)
+ci_obs_disp
 
 reduction <- mu1 - mu10
 reduction
@@ -146,18 +151,7 @@ trim1 <- switch(outcome,
                 "attempt" = 1 - quantile(e1_raw, 0.90, names = FALSE))
 
 
-boot_ci_red <- bootstrapCI(G, Z, Y, XA_log, XN_log,
-                           gamma = log(1.02), trim0 = trim0, trim1 = trim1,
-                           estimand = "red", stratify = FALSE, alpha = 0.05,
-                           allowable = TRUE)
-boot_ci_red
 
-# Want to find Lambda such that mu10 = mu0. # 1.3 for ideation, 1.7 for attempt
-mu10
-mu0
-bootstrapCI(G, Z, Y, XA_log, XN_log, gamma = log(1), 
-            trim0 = trim0, trim1 = trim1,
-            estimand = "point", alpha = 0.1)
 
 
 
@@ -198,8 +192,49 @@ reduction
 sd(out_red)
 mean(out_red)
 
-# 95% CI for out_red
+sd(out_resid)
 
+
+# crit Lam where the reduction CI crosses 0
+crit_ci_red <- sapply(c(1.01, 1.02), function(lam) {
+  boot_ci_red <- bootstrapCI(G, Z, Y, XA_log, XN_log,
+                             gamma = log(lam), trim0 = trim0, trim1 = trim1,
+                             estimand = "red", stratify = FALSE, alpha = 0.05,
+                             allowable = TRUE)
+  boot_ci_red
+}) %>% t()
+crit_ci_red
+
+# crit Lam where the reduction point est crosses 0
+crit_pe_red <- sapply(c(1.08, 1.09), function(lam) {
+  boot_ci_red <- decompsens::getExtrema(G=G, Y=Y, w=w, gamma = log(lam), estimand = "red", RD = TRUE, verbose = FALSE)
+  boot_ci_red
+}) %>% t()
+crit_pe_red
+
+bootstrapCI(G, Z, Y, XA_log, XN_log,
+            gamma = log(1.52), trim0 = trim0, trim1 = trim1,
+            estimand = "resid", stratify = FALSE, alpha = 0.05,
+            allowable = TRUE)
+
+# crit Lam where the residual CI crosses 0
+crit_ci_res <- sapply(c(1.52, 1.53), function(lam) {
+  boot_ci_res <- bootstrapCI(G, Z, Y, XA_log, XN_log,
+                             gamma = log(lam), trim0 = trim0, trim1 = trim1,
+                             estimand = "res", stratify = FALSE, alpha = 0.05,
+                             allowable = TRUE)
+  boot_ci_res
+}) %>% t()
+crit_ci_res
+
+
+
+# crit Lam where the residual point est crosses 0
+crit_pe_res <- sapply(c(1.67, 1.68), function(lam) {
+  boot_ci_res <- decompsens::getExtrema(G=G, Y=Y, w=w, gamma = log(lam), estimand = "res", RD = TRUE, verbose = FALSE)
+  boot_ci_res
+}) %>% t()
+crit_pe_res
 
 
 seq <- seq(1, 3, by = 0.005)
@@ -232,3 +267,15 @@ p_extrema <- out %>%
 
 p_extrema
 
+boot_ci_red <- bootstrapCI(G, Z, Y, XA_log, XN_log,
+                           gamma = log(1.02), trim0 = trim0, trim1 = trim1,
+                           estimand = "red", stratify = FALSE, alpha = 0.05,
+                           allowable = TRUE)
+boot_ci_red
+
+# Want to find Lambda such that mu10 = mu0. # 1.3 for ideation, 1.7 for attempt
+mu10
+mu0
+bootstrapCI(G, Z, Y, XA_log, XN_log, gamma = log(1), 
+            trim0 = trim0, trim1 = trim1,
+            estimand = "point", alpha = 0.1)
