@@ -100,8 +100,6 @@ mu1_AS-mu0_AS
 
 
 mu1
-c(mu1 - qnorm(0.975) * sqrt(mean(Y[G == 1]) * (1 - mean(Y[G == 1])) / length(Y[G == 1])),
-  mu1 + qnorm(0.975) * sqrt(mean(Y[G == 1]) * (1 - mean(Y[G == 1]))) / length(Y[G == 1]))
 mu10
 mu0
 
@@ -124,21 +122,17 @@ residual
 mu10/mu0
 residual / obs_disp
 
-
-# Bootstrap standard errors
-B <- 1000
-resid_boot <- numeric(B)
-allowable <- TRUE
-
 mu10
 getExtrema(G,Y,gamma = log(1), w = w, verbose = FALSE, estimand = "point")
 
 
 reduction
+getExtrema(G,Y,gamma = log(1.08), w = w, verbose = TRUE, estimand = "red")
 getExtrema(G,Y,gamma = log(1.09), w = w, verbose = TRUE, estimand = "red")
 
 residual
 getExtrema(G,Y,gamma = log(1.67), w = w, verbose = TRUE, estimand = "res")
+getExtrema(G,Y,gamma = log(1.68), w = w, verbose = TRUE, estimand = "res")
 
 
 e0_raw <- glm(Z ~ ., data = df_allowable, family = binomial(link = "logit"), weights = (1-G))$fitted.values
@@ -150,11 +144,9 @@ trim1 <- switch(outcome,
                 "ideation" = 1 - quantile(e1_raw, 0.93, names = FALSE),
                 "attempt" = 1 - quantile(e1_raw, 0.90, names = FALSE))
 
-
-
-
-
-
+# Bootstrap standard errors
+B <- 1000
+allowable <- TRUE
 
 out <- parallel::mclapply(1:B, function(i) {
   ind <- sample(1:length(Y), length(Y), replace = TRUE)
@@ -211,11 +203,6 @@ crit_pe_red <- sapply(c(1.08, 1.09), function(lam) {
   boot_ci_red
 }) %>% t()
 crit_pe_red
-
-bootstrapCI(G, Z, Y, XA_log, XN_log,
-            gamma = log(1.52), trim0 = trim0, trim1 = trim1,
-            estimand = "resid", stratify = FALSE, alpha = 0.05,
-            allowable = TRUE)
 
 # crit Lam where the residual CI crosses 0
 crit_ci_res <- sapply(c(1.52, 1.53), function(lam) {

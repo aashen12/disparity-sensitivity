@@ -70,6 +70,18 @@ mu1
 mu10
 mu0
 
+
+# standard errors
+
+
+
+
+
+
+
+
+
+
 XA <- model.matrix(~ . -1, data = df_x %>% select(all_of(allowable_covs))) %>% NAImpute()
 XA <- XA[, !grepl(":.*NA$", colnames(XA))]
 XN <- model.matrix(~ . -1, data = df_x %>% select(all_of(non_allowable_covs))) %>% NAImpute()

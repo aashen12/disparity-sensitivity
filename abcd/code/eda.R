@@ -99,7 +99,7 @@ if (Z_method == 0) {
     #select(src_subject_id, parent_worry, parent_upset, caregiver_worry, caregiver_upset) %>% 
     group_by(src_subject_id) %>%
     mutate(parent_accept = case_when(
-      sum(parent_worry, parent_upset, caregiver_worry, caregiver_upset, na.rm = FALSE) > thresh ~ 1,
+      sum(parent_worry, parent_upset, caregiver_worry, caregiver_upset, na.rm = FALSE) >= thresh ~ 1,
       !is.na(caregiver_worry) & !is.na(caregiver_upset) & all(parent_worry <= 2.99, parent_upset <= 2.99, caregiver_worry <= 2.99, caregiver_upset <= 2.99) ~ 0,
       sum(parent_worry, parent_upset) >= 5.99 & is.na(caregiver_worry) & is.na(caregiver_upset) ~ 1,
       all(parent_worry < 2.99, parent_upset < 2.99) & is.na(caregiver_worry) & is.na(caregiver_upset) ~ 0,

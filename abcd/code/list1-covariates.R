@@ -52,6 +52,7 @@ options(na.action='na.pass')
 mediators <- c("src_subject_id", "family_mental_health")
 # allowable_covs <- c("age", "sex", "sib_order", "sib_num")
 allowable_covs <- c("age", "sex")
+#allowable_covs <- c("age", "sex", "family_conflict")
 #allowable_covs <- c("age", "sex", "sib_num", "sib_order", "income", "adi")
 non_allowable_covs <- setdiff(names(df_x)[!names(df_x) %in% mediators], allowable_covs)
 
@@ -96,13 +97,15 @@ e0_raw <- glm(Z ~ ., data = df_allowable, family = binomial(link = "logit"), wei
 e1_raw <- glm(Z ~ ., data = cbind(df_allowable, df_non_allowable), family = binomial(link = "logit"), weights = G)$fitted.values
 
 
-trim0 <- 1 - quantile(e0_raw, 0.99, names = FALSE)
+trim0 <- 1 - quantile(e0_raw, 0.99, names = FALSE) # for age + sex allowable
+#trim0 <- 1 - quantile(e0_raw, 0.80, names = FALSE) # for age + sex + FC allowable
 trim1 <- switch(outcome, 
                 "ideation" = 1 - quantile(e1_raw, 0.93, names = FALSE),
                 "attempt" = 1 - quantile(e1_raw, 0.90, names = FALSE))
 
 
 e0 <- pmax(pmin(e0_raw, 1 - trim0), trim0)
+summary(e0)
 e1 <- pmax(pmin(e1_raw, 1 - trim1), trim1)
 
 
