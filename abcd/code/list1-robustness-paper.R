@@ -32,8 +32,11 @@ Z_method <- "worry_upset"
 
 outcome <- "ideation" # ideation or attempt
 
-df_x <- read_csv(paste0("../data/list1_X_", Z_method, "_", outcome, ".csv"))
-df_yz <- read_csv(paste0("../data/list1_YZGW_", Z_method, "_", outcome, ".csv"))
+id_to_drop <- readRDS("../data/si_baseline_ids.rds")
+df_x <- read_csv(paste0("../data/list1_X_", Z_method, "_", outcome, ".csv")) %>% 
+  filter(!src_subject_id %in% id_to_drop)
+df_yz <- read_csv(paste0("../data/list1_robust_YZGW_", Z_method, "_", outcome, ".csv"))
+all(df_x$src_subject_id == df_yz$src_subject_id)
 
 mediators <- c("src_subject_id")
 mediators <- c("src_subject_id", "family_mental_health")
@@ -129,7 +132,7 @@ generatePlot <- function(num_cov_lbl = 8, num_pt_lbl = 3, psize = 6, estimand = 
   print(paste0("Point Est Lambda: ", Lam_05))
   # even if we care about red or res, we use point bc the lambda already takes
   # into account whether we care about red or res
-
+  
   amplification <- decompsens::decompAmplify(G, Z, XA, XN, Y, w, mu_10=mu10, 
                                              Lambda = Lam_pe, e1 = e1, e0 = e0)
   # amp for point est
@@ -146,7 +149,7 @@ generatePlot <- function(num_cov_lbl = 8, num_pt_lbl = 3, psize = 6, estimand = 
   
   # Amp for 0.05
   amplification05 <- decompsens::decompAmplify(G, Z, XA, XN, Y, w, mu_10=mu10, 
-                                             Lambda = Lam_05, e1 = e1, e0 = e0)
+                                               Lambda = Lam_05, e1 = e1, e0 = e0)
   maxbias05 <- amplification05$maxbias
   
   if (estimand == "residual") {
@@ -259,8 +262,14 @@ generatePlot <- function(num_cov_lbl = 8, num_pt_lbl = 3, psize = 6, estimand = 
   }
 }
 
+aspect_ratio <- 1896 / 1510
+height <- 7  # You can choose a different height
+width <- height * aspect_ratio
+aspect_ratio
+
 red_plot <- generatePlot(num_cov_lbl = 12, num_pt_lbl = 3, psize = 6.5, estimand = "red")
 red_plot
+
 
 resid_plot <- generatePlot(num_cov_lbl = 12, num_pt_lbl = 3, psize = 6.5, estimand = "resid")
 resid_plot
