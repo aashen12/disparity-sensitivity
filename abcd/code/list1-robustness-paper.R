@@ -269,10 +269,10 @@ aspect_ratio
 
 red_plot <- generatePlot(num_cov_lbl = 12, num_pt_lbl = 3, psize = 6.5, estimand = "red")
 red_plot
-ggsave("../figs/reduc_ideation_robust.png", width = 10.5, height = 9)
+ggsave("../figs/reduc_ideation_robust.pdf", width = 10.5, height = 9)
 
 
 resid_plot <- generatePlot(num_cov_lbl = 12, num_pt_lbl = 3, psize = 6.5, estimand = "resid")
 resid_plot
-ggsave("../figs/resid_ideation_robust.png", width = 10.5, height = 9)
+ggsave("../figs/resid_ideation_robust.pdf", width = 10.5, height = 9)
 
