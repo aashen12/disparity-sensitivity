@@ -33,8 +33,10 @@ Z_method <- "worry_upset"
 
 outcome <- "ideation" # ideation or attempt
 
-df_x <- read_csv(paste0("../data/list1_X_", Z_method, "_", outcome, ".csv"))
-df_yz <- read_csv(paste0("../data/list1_YZGW_", Z_method, "_", outcome, ".csv"))
+df_x <- read_csv(paste0("../data/list1_simrev1_X_", Z_method, "_", outcome, ".csv"))
+df_yz <- read_csv(paste0("../data/list1_simrev1_YZGW_", Z_method, "_", outcome, ".csv"))
+
+# 5807 - 4510 = 1297 extra people with superior PA
 
 table(df_yz$parent_accept, df_yz$sex_min)
 
@@ -131,12 +133,13 @@ getExtrema(G,Y,gamma = log(1), w = w, verbose = FALSE, estimand = "point")
 
 
 reduction
-getExtrema(G,Y,gamma = log(1.08), w = w, verbose = TRUE, estimand = "red")
-getExtrema(G,Y,gamma = log(1.09), w = w, verbose = TRUE, estimand = "red")
+getExtrema(G,Y,gamma = log(1.04), w = w, verbose = TRUE, estimand = "red")
+getExtrema(G,Y,gamma = log(1.05), w = w, verbose = TRUE, estimand = "red") # use this one
+
 
 residual
-getExtrema(G,Y,gamma = log(1.67), w = w, verbose = TRUE, estimand = "res")
 getExtrema(G,Y,gamma = log(1.68), w = w, verbose = TRUE, estimand = "res")
+getExtrema(G,Y,gamma = log(1.69), w = w, verbose = TRUE, estimand = "res") # use this one
 
 
 e0_raw <- glm(Z ~ ., data = df_allowable, family = binomial(link = "logit"), weights = (1-G))$fitted.values
@@ -209,12 +212,12 @@ crit_pe_red <- sapply(c(1.08, 1.09), function(lam) {
 crit_pe_red
 
 # crit Lam where the residual CI crosses 0
-crit_ci_res <- sapply(c(1.52, 1.53), function(lam) {
+crit_ci_res <- sapply(seq(1.5, 1.58, by = 0.01), function(lam) {
   boot_ci_res <- bootstrapCI(G, Z, Y, XA_log, XN_log,
                              gamma = log(lam), trim0 = trim0, trim1 = trim1,
                              estimand = "res", stratify = FALSE, alpha = 0.05,
                              allowable = TRUE)
-  boot_ci_res
+  c(lam,boot_ci_res)
 }) %>% t()
 crit_ci_res
 

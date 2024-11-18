@@ -1,0 +1,759 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{longtable,booktabs,array}
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage{makecell}
+\usepackage{xcolor}
+\usepackage{multicol}
+\usepackage{hhline}
+\newlength\Oldarrayrulewidth
+\newlength\Oldtabcolsep
+\usepackage{hyperref}
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdftitle={List 1 Demographics},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{List 1 Demographics}
+\author{}
+\date{\vspace{-2.5em}2024-06-11}
+
+\begin{document}
+\maketitle
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Analysis of list 1}
+\FunctionTok{source}\NormalTok{(}\StringTok{"functions.R"}\NormalTok{)}
+\FunctionTok{set.seed}\NormalTok{(}\DecValTok{122357}\NormalTok{)}
+
+
+\NormalTok{numCores }\OtherTok{\textless{}{-}}\NormalTok{ parallel}\SpecialCharTok{::}\FunctionTok{detectCores}\NormalTok{()}
+
+\NormalTok{doParallel}\SpecialCharTok{::}\FunctionTok{registerDoParallel}\NormalTok{(numCores)}
+
+\NormalTok{Z\_method }\OtherTok{\textless{}{-}} \StringTok{"worry\_upset"}
+\CommentTok{\# "better\_worry",}
+\CommentTok{\# "smile",}
+\CommentTok{\# "better\_upset",}
+\CommentTok{\# "love",}
+\CommentTok{\# "easy\_talk}
+\CommentTok{\# aggregate}
+\CommentTok{\# worry\_upset}
+
+\NormalTok{outcome }\OtherTok{\textless{}{-}} \StringTok{"ideation"} \CommentTok{\# ideation or attempt}
+
+
+\NormalTok{interact }\OtherTok{\textless{}{-}} \ConstantTok{FALSE}
+
+\NormalTok{df\_x }\OtherTok{\textless{}{-}} \FunctionTok{read\_csv}\NormalTok{(}\FunctionTok{paste0}\NormalTok{(}\StringTok{"../data/list1\_X\_"}\NormalTok{, Z\_method, }\StringTok{"\_"}\NormalTok{, outcome, }\StringTok{".csv"}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Rows: 4510 Columns: 13
+## -- Column specification --------------------------------------------------------
+## Delimiter: ","
+## chr  (2): src_subject_id, sex
+## dbl (11): age, income, sib_num, sib_order, family_conflict, family_mental_he...
+## 
+## i Use `spec()` to retrieve the full column specification for this data.
+## i Specify the column types or set `show_col_types = FALSE` to quiet this message.
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{df\_yz }\OtherTok{\textless{}{-}} \FunctionTok{read\_csv}\NormalTok{(}\FunctionTok{paste0}\NormalTok{(}\StringTok{"../data/list1\_YZG\_"}\NormalTok{, Z\_method, }\StringTok{"\_"}\NormalTok{, outcome, }\StringTok{".csv"}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Rows: 4510 Columns: 5
+## -- Column specification --------------------------------------------------------
+## Delimiter: ","
+## chr (1): src_subject_id
+## dbl (4): suicide, parent_accept, sex_min, peer_victimization
+## 
+## i Use `spec()` to retrieve the full column specification for this data.
+## i Specify the column types or set `show_col_types = FALSE` to quiet this message.
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{G }\OtherTok{\textless{}{-}}\NormalTok{ df\_yz}\SpecialCharTok{$}\NormalTok{sex\_min}
+\NormalTok{Z }\OtherTok{\textless{}{-}}\NormalTok{ df\_yz}\SpecialCharTok{$}\NormalTok{parent\_accept}
+\NormalTok{Y }\OtherTok{\textless{}{-}}\NormalTok{ df\_yz}\SpecialCharTok{$}\NormalTok{suicide}
+
+\FunctionTok{table}\NormalTok{(Z)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}rr@{}}
+\toprule\noalign{}
+0 & 1 \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+2120 & 2390 \\
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{table}\NormalTok{(G)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}rr@{}}
+\toprule\noalign{}
+0 & 1 \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+3718 & 792 \\
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{table}\NormalTok{(Y)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}rr@{}}
+\toprule\noalign{}
+0 & 1 \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+3411 & 1099 \\
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Allowable covariates }
+\FunctionTok{options}\NormalTok{(}\AttributeTok{na.action=}\StringTok{\textquotesingle{}na.pass\textquotesingle{}}\NormalTok{)}
+
+
+\CommentTok{\#mediators \textless{}{-} c("peer\_victimization")}
+\NormalTok{mediators }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\StringTok{"src\_subject\_id"}\NormalTok{, }\StringTok{"family\_mental\_health"}\NormalTok{)}
+\CommentTok{\# allowable\_covs \textless{}{-} c("age", "sex", "sib\_order", "sib\_num")}
+\NormalTok{allowable\_covs }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\StringTok{"age"}\NormalTok{, }\StringTok{"sex"}\NormalTok{)}
+\CommentTok{\#allowable\_covs \textless{}{-} c("age", "sex", "family\_conflict")}
+\CommentTok{\#allowable\_covs \textless{}{-} c("age", "sex", "sib\_num", "sib\_order", "income", "adi")}
+\NormalTok{non\_allowable\_covs }\OtherTok{\textless{}{-}} \FunctionTok{setdiff}\NormalTok{(}\FunctionTok{names}\NormalTok{(df\_x)[}\SpecialCharTok{!}\FunctionTok{names}\NormalTok{(df\_x) }\SpecialCharTok{\%in\%}\NormalTok{ mediators], allowable\_covs)}
+
+\NormalTok{df\_allowable }\OtherTok{\textless{}{-}} \FunctionTok{model.matrix}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{ .}\SpecialCharTok{\^{}}\DecValTok{2} \SpecialCharTok{{-}}\DecValTok{1}\NormalTok{, }\AttributeTok{data =}\NormalTok{ df\_x }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{select}\NormalTok{(}\FunctionTok{all\_of}\NormalTok{(allowable\_covs))) }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{data.frame}\NormalTok{() }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{NAImpute}\NormalTok{() }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{tibble}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "Missing values found in column 1 of X; imputing and adding missingness indicators"
+## [1] "Missing values found in column 2 of X; imputing and adding missingness indicators"
+## [1] "Missing values found in column 3 of X; imputing and adding missingness indicators"
+## [1] "Missing values found in column 4 of X; imputing and adding missingness indicators"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{df\_non\_allowable }\OtherTok{\textless{}{-}} \FunctionTok{model.matrix}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{ . }\SpecialCharTok{{-}}\DecValTok{1}\NormalTok{, }\AttributeTok{data =}\NormalTok{ df\_x }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{select}\NormalTok{(}\FunctionTok{all\_of}\NormalTok{(non\_allowable\_covs))) }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{data.frame}\NormalTok{() }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{NAImpute}\NormalTok{() }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{tibble}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "Missing values found in column 1 of X; imputing and adding missingness indicators"
+## [1] "Missing values found in column 3 of X; imputing and adding missingness indicators"
+## [1] "Missing values found in column 5 of X; imputing and adding missingness indicators"
+## [1] "Missing values found in column 8 of X; imputing and adding missingness indicators"
+## [1] "Missing values found in column 9 of X; imputing and adding missingness indicators"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{my.render.cont }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(x) \{}
+  \FunctionTok{with}\NormalTok{(}\FunctionTok{stats.apply.rounding}\NormalTok{(}\FunctionTok{stats.default}\NormalTok{(x), }\AttributeTok{digits=}\DecValTok{2}\NormalTok{), }\FunctionTok{c}\NormalTok{(}\StringTok{""}\NormalTok{,}
+                                                           \StringTok{"Mean (SD)"}\OtherTok{=}\FunctionTok{sprintf}\NormalTok{(}\StringTok{"\%s (\%s)"}\NormalTok{, MEAN, SD)))}
+\NormalTok{\}}
+\NormalTok{my.render.cat }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(x) \{}
+  \FunctionTok{c}\NormalTok{(}\StringTok{""}\NormalTok{, }\FunctionTok{sapply}\NormalTok{(}\FunctionTok{stats.default}\NormalTok{(x), }\ControlFlowTok{function}\NormalTok{(y) }\FunctionTok{with}\NormalTok{(y,}
+                                                  \FunctionTok{sprintf}\NormalTok{(}\StringTok{"\%d (\%0.0f\%\%)"}\NormalTok{, FREQ, PCT))))}
+\NormalTok{\}}
+
+\NormalTok{pvalue }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(x, ...) \{}
+  \CommentTok{\# Construct vectors of data y, and groups (strata) g}
+\NormalTok{  y }\OtherTok{\textless{}{-}} \FunctionTok{unlist}\NormalTok{(x)}
+\NormalTok{  g }\OtherTok{\textless{}{-}} \FunctionTok{factor}\NormalTok{(}\FunctionTok{rep}\NormalTok{(}\DecValTok{1}\SpecialCharTok{:}\FunctionTok{length}\NormalTok{(x), }\AttributeTok{times=}\FunctionTok{sapply}\NormalTok{(x, length)))}
+  \ControlFlowTok{if}\NormalTok{ (}\FunctionTok{is.numeric}\NormalTok{(y)) \{}
+    \CommentTok{\# For numeric variables, perform a standard 2{-}sample t{-}test}
+\NormalTok{    p }\OtherTok{\textless{}{-}} \FunctionTok{t.test}\NormalTok{(y }\SpecialCharTok{\textasciitilde{}}\NormalTok{ g)}\SpecialCharTok{$}\NormalTok{p.value}
+\NormalTok{  \} }\ControlFlowTok{else}\NormalTok{ \{}
+    \CommentTok{\# For categorical variables, perform a chi{-}squared test of independence}
+\NormalTok{    p }\OtherTok{\textless{}{-}} \FunctionTok{chisq.test}\NormalTok{(}\FunctionTok{table}\NormalTok{(y, g))}\SpecialCharTok{$}\NormalTok{p.value}
+\NormalTok{  \}}
+  \CommentTok{\# Format the p{-}value, using an HTML entity for the less{-}than sign.}
+  \CommentTok{\# The initial empty string places the output on the line below the variable label.}
+  \FunctionTok{c}\NormalTok{(}\StringTok{""}\NormalTok{, }\FunctionTok{sub}\NormalTok{(}\StringTok{"\textless{}"}\NormalTok{, }\StringTok{"\&lt;"}\NormalTok{, }\FunctionTok{format.pval}\NormalTok{(p, }\AttributeTok{digits=}\DecValTok{3}\NormalTok{, }\AttributeTok{eps=}\FloatTok{0.001}\NormalTok{)))}
+\NormalTok{\}}
+
+\NormalTok{demog\_df }\OtherTok{\textless{}{-}} \FunctionTok{full\_join}\NormalTok{(df\_x, df\_yz, }\AttributeTok{by =} \StringTok{"src\_subject\_id"}\NormalTok{)}
+\NormalTok{demog\_df}\SpecialCharTok{$}\NormalTok{sex\_min }\OtherTok{\textless{}{-}} \FunctionTok{factor}\NormalTok{(demog\_df}\SpecialCharTok{$}\NormalTok{sex\_min, }\AttributeTok{levels =} \FunctionTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{1}\NormalTok{), }\AttributeTok{labels =} \FunctionTok{c}\NormalTok{(}\StringTok{"Heterosexual"}\NormalTok{, }\StringTok{"Sexual Minority"}\NormalTok{))}
+\NormalTok{demog\_df}\SpecialCharTok{$}\NormalTok{parent\_accept }\OtherTok{\textless{}{-}} \FunctionTok{factor}\NormalTok{(demog\_df}\SpecialCharTok{$}\NormalTok{parent\_accept, }\AttributeTok{levels =} \FunctionTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{1}\NormalTok{), }\AttributeTok{labels =} \FunctionTok{c}\NormalTok{(}\StringTok{"Poor Parental Acceptance"}\NormalTok{, }\StringTok{"Superior Parental Acceptance"}\NormalTok{))}
+\NormalTok{demog\_df}\SpecialCharTok{$}\NormalTok{sex }\OtherTok{\textless{}{-}} \FunctionTok{factor}\NormalTok{(demog\_df}\SpecialCharTok{$}\NormalTok{sex, }\AttributeTok{levels =} \FunctionTok{c}\NormalTok{(}\StringTok{"F"}\NormalTok{, }\StringTok{"M"}\NormalTok{), }\AttributeTok{labels =} \FunctionTok{c}\NormalTok{(}\StringTok{"Female"}\NormalTok{, }\StringTok{"Male"}\NormalTok{))}
+\NormalTok{demog\_df}\SpecialCharTok{$}\NormalTok{family\_mental\_health }\OtherTok{\textless{}{-}} \FunctionTok{as.logical}\NormalTok{(demog\_df}\SpecialCharTok{$}\NormalTok{family\_mental\_health)}
+\NormalTok{demog\_df}\SpecialCharTok{$}\NormalTok{income }\OtherTok{\textless{}{-}} \FunctionTok{factor}\NormalTok{(demog\_df}\SpecialCharTok{$}\NormalTok{income, }\AttributeTok{levels =} \FunctionTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{, }\DecValTok{2}\NormalTok{, }\DecValTok{3}\NormalTok{, }\DecValTok{4}\NormalTok{, }\DecValTok{5}\NormalTok{, }\DecValTok{6}\NormalTok{, }\DecValTok{7}\NormalTok{, }\DecValTok{8}\NormalTok{, }\DecValTok{9}\NormalTok{, }\DecValTok{10}\NormalTok{))}
+\FunctionTok{label}\NormalTok{(demog\_df}\SpecialCharTok{$}\NormalTok{parent\_accept) }\OtherTok{\textless{}{-}} \StringTok{"Parental Acceptance"}
+\FunctionTok{label}\NormalTok{(demog\_df}\SpecialCharTok{$}\NormalTok{sex\_min) }\OtherTok{\textless{}{-}} \StringTok{"Sexual Minority Status"}
+\FunctionTok{label}\NormalTok{(demog\_df}\SpecialCharTok{$}\NormalTok{age) }\OtherTok{\textless{}{-}} \StringTok{"Age"}
+\FunctionTok{units}\NormalTok{(demog\_df}\SpecialCharTok{$}\NormalTok{age) }\OtherTok{\textless{}{-}} \StringTok{"years"}
+\FunctionTok{label}\NormalTok{(demog\_df}\SpecialCharTok{$}\NormalTok{sex) }\OtherTok{\textless{}{-}} \StringTok{"Sex Assigned at Birth"}
+\FunctionTok{label}\NormalTok{(demog\_df}\SpecialCharTok{$}\NormalTok{sib\_num) }\OtherTok{\textless{}{-}} \StringTok{"Number of Siblings"}
+\FunctionTok{label}\NormalTok{(demog\_df}\SpecialCharTok{$}\NormalTok{sib\_order) }\OtherTok{\textless{}{-}} \StringTok{"Birth Order"}
+\FunctionTok{label}\NormalTok{(demog\_df}\SpecialCharTok{$}\NormalTok{income) }\OtherTok{\textless{}{-}} \StringTok{"Household Income"}
+\FunctionTok{units}\NormalTok{(demog\_df}\SpecialCharTok{$}\NormalTok{income) }\OtherTok{\textless{}{-}} \StringTok{"scale of 1{-}10, 1 is lowest income bracket"}
+\FunctionTok{label}\NormalTok{(demog\_df}\SpecialCharTok{$}\NormalTok{adi) }\OtherTok{\textless{}{-}} \StringTok{"Area Deprivation Index"}
+\FunctionTok{units}\NormalTok{(demog\_df}\SpecialCharTok{$}\NormalTok{adi) }\OtherTok{\textless{}{-}} \StringTok{"numeric measurement, larger is more deprived"}
+\FunctionTok{label}\NormalTok{(demog\_df}\SpecialCharTok{$}\NormalTok{family\_conflict) }\OtherTok{\textless{}{-}} \StringTok{"Family Conflict"}
+\FunctionTok{units}\NormalTok{(demog\_df}\SpecialCharTok{$}\NormalTok{family\_conflict) }\OtherTok{\textless{}{-}} \StringTok{"numeric measurement, larger is more conflict"}
+\FunctionTok{label}\NormalTok{(demog\_df}\SpecialCharTok{$}\NormalTok{family\_mental\_health) }\OtherTok{\textless{}{-}} \StringTok{"Previous Suicide Attempt in Family"}
+\FunctionTok{label}\NormalTok{(demog\_df}\SpecialCharTok{$}\NormalTok{peer\_victimization.x) }\OtherTok{\textless{}{-}} \StringTok{"Peer Victimization"}
+\FunctionTok{units}\NormalTok{(demog\_df}\SpecialCharTok{$}\NormalTok{peer\_victimization.x) }\OtherTok{\textless{}{-}} \StringTok{"numeric measurement, larger is more severe"}
+\FunctionTok{label}\NormalTok{(demog\_df}\SpecialCharTok{$}\NormalTok{school\_safety) }\OtherTok{\textless{}{-}} \StringTok{"School Safety"}
+\FunctionTok{units}\NormalTok{(demog\_df}\SpecialCharTok{$}\NormalTok{school\_safety) }\OtherTok{\textless{}{-}} \StringTok{"numeric measurement, larger is safer"}
+\FunctionTok{label}\NormalTok{(demog\_df}\SpecialCharTok{$}\NormalTok{neighborhood\_safety) }\OtherTok{\textless{}{-}} \StringTok{"Neighborhood Safety"}
+\FunctionTok{units}\NormalTok{(demog\_df}\SpecialCharTok{$}\NormalTok{neighborhood\_safety) }\OtherTok{\textless{}{-}} \StringTok{"numeric measurement, larger is safer"}
+\FunctionTok{label}\NormalTok{(demog\_df}\SpecialCharTok{$}\NormalTok{structural\_stigma) }\OtherTok{\textless{}{-}} \StringTok{"Structural Stigma"}
+\FunctionTok{units}\NormalTok{(demog\_df}\SpecialCharTok{$}\NormalTok{structural\_stigma) }\OtherTok{\textless{}{-}} \StringTok{"State level indicators of sexism from survey and implicit bias measures"}
+
+\NormalTok{t1 }\OtherTok{\textless{}{-}} \FunctionTok{table1}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{age }\SpecialCharTok{+}\NormalTok{ sex }\SpecialCharTok{+}\NormalTok{ sib\_num }\SpecialCharTok{+}\NormalTok{ sib\_order }\SpecialCharTok{+}\NormalTok{ income }\SpecialCharTok{+}\NormalTok{ adi }\SpecialCharTok{+} 
+\NormalTok{               family\_conflict }\SpecialCharTok{+}\NormalTok{ family\_mental\_health }\SpecialCharTok{+}\NormalTok{ peer\_victimization.x }\SpecialCharTok{+} 
+\NormalTok{               school\_safety }\SpecialCharTok{+}\NormalTok{ neighborhood\_safety }\SpecialCharTok{+}\NormalTok{ adi }\SpecialCharTok{+}\NormalTok{ structural\_stigma }\SpecialCharTok{|}\NormalTok{ sex\_min}\SpecialCharTok{*}\NormalTok{parent\_accept, }
+             \AttributeTok{data =}\NormalTok{ demog\_df, }
+             \AttributeTok{render.continuous=}\NormalTok{my.render.cont, }
+             \AttributeTok{render.categorical=}\NormalTok{my.render.cat, }\AttributeTok{overall =}\NormalTok{ F)}
+\NormalTok{x }\OtherTok{\textless{}{-}}\NormalTok{ t1}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{x }\SpecialCharTok{\%\textgreater{}\%}
+    \FunctionTok{kbl}\NormalTok{(}\AttributeTok{caption =} \StringTok{"Example"}\NormalTok{, }\CommentTok{\# Adding caption  }
+        \AttributeTok{format =} \StringTok{"latex"}\NormalTok{, }\AttributeTok{booktabs =} \ConstantTok{TRUE}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{kable\_styling}\NormalTok{(}\AttributeTok{latex\_options =} \StringTok{"striped"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{table}
+\centering
+\caption{\label{tab:unnamed-chunk-2}Example}
+\centering
+\begin{tabular}[t]{lllll}
+\toprule
+  & Poor Parental Acceptance & Superior Parental Acceptance & Poor Parental Acceptance & Superior Parental Acceptance\\
+\midrule
+\cellcolor{gray!10}{} & \cellcolor{gray!10}{(N=1599)} & \cellcolor{gray!10}{(N=2119)} & \cellcolor{gray!10}{(N=521)} & \cellcolor{gray!10}{(N=271)}\\
+Age (years) &  &  &  & \\
+\cellcolor{gray!10}{Mean (SD)} & \cellcolor{gray!10}{9.9 (0.63)} & \cellcolor{gray!10}{9.9 (0.62)} & \cellcolor{gray!10}{9.9 (0.64)} & \cellcolor{gray!10}{10 (0.63)}\\
+Missing & 1 (0.1\%) & 0 (0\%) & 0 (0\%) & 0 (0\%)\\
+\cellcolor{gray!10}{Sex Assigned at Birth} & \cellcolor{gray!10}{} & \cellcolor{gray!10}{} & \cellcolor{gray!10}{} & \cellcolor{gray!10}{}\\
+\addlinespace
+Female & 608 (38\%) & 944 (45\%) & 415 (80\%) & 205 (76\%)\\
+\cellcolor{gray!10}{Male} & \cellcolor{gray!10}{990 (62\%)} & \cellcolor{gray!10}{1173 (55\%)} & \cellcolor{gray!10}{106 (20\%)} & \cellcolor{gray!10}{66 (24\%)}\\
+Missing & 1 (0.1\%) & 2 (0.1\%) & 0 (0\%) & 0 (0\%)\\
+\cellcolor{gray!10}{Number of Siblings} & \cellcolor{gray!10}{} & \cellcolor{gray!10}{} & \cellcolor{gray!10}{} & \cellcolor{gray!10}{}\\
+Mean (SD) & 1.5 (1.3) & 1.6 (1.3) & 1.2 (1.1) & 1.1 (1.0)\\
+\addlinespace
+\cellcolor{gray!10}{Birth Order} & \cellcolor{gray!10}{} & \cellcolor{gray!10}{} & \cellcolor{gray!10}{} & \cellcolor{gray!10}{}\\
+Mean (SD) & 1.7 (1.0) & 1.7 (1.0) & 1.6 (0.85) & 1.5 (0.75)\\
+\cellcolor{gray!10}{Missing} & \cellcolor{gray!10}{5 (0.3\%)} & \cellcolor{gray!10}{4 (0.2\%)} & \cellcolor{gray!10}{1 (0.2\%)} & \cellcolor{gray!10}{1 (0.4\%)}\\
+Household Income (scale of 1-10, 1 is lowest income bracket) &  &  &  & \\
+\cellcolor{gray!10}{1} & \cellcolor{gray!10}{22 (1\%)} & \cellcolor{gray!10}{41 (2\%)} & \cellcolor{gray!10}{6 (1\%)} & \cellcolor{gray!10}{2 (1\%)}\\
+\addlinespace
+2 & 19 (1\%) & 22 (1\%) & 2 (0\%) & 2 (1\%)\\
+\cellcolor{gray!10}{3} & \cellcolor{gray!10}{13 (1\%)} & \cellcolor{gray!10}{18 (1\%)} & \cellcolor{gray!10}{10 (2\%)} & \cellcolor{gray!10}{1 (0\%)}\\
+4 & 27 (2\%) & 32 (2\%) & 8 (2\%) & 2 (1\%)\\
+\cellcolor{gray!10}{5} & \cellcolor{gray!10}{31 (2\%)} & \cellcolor{gray!10}{35 (2\%)} & \cellcolor{gray!10}{7 (1\%)} & \cellcolor{gray!10}{9 (3\%)}\\
+6 & 64 (4\%) & 52 (2\%) & 14 (3\%) & 3 (1\%)\\
+\addlinespace
+\cellcolor{gray!10}{7} & \cellcolor{gray!10}{73 (5\%)} & \cellcolor{gray!10}{79 (4\%)} & \cellcolor{gray!10}{31 (6\%)} & \cellcolor{gray!10}{13 (5\%)}\\
+8 & 90 (6\%) & 106 (5\%) & 25 (5\%) & 16 (6\%)\\
+\cellcolor{gray!10}{9} & \cellcolor{gray!10}{304 (19\%)} & \cellcolor{gray!10}{488 (23\%)} & \cellcolor{gray!10}{95 (18\%)} & \cellcolor{gray!10}{57 (21\%)}\\
+10 & 132 (8\%) & 230 (11\%) & 43 (8\%) & 36 (13\%)\\
+\cellcolor{gray!10}{Missing} & \cellcolor{gray!10}{824 (51.5\%)} & \cellcolor{gray!10}{1016 (47.9\%)} & \cellcolor{gray!10}{280 (53.7\%)} & \cellcolor{gray!10}{130 (48.0\%)}\\
+\addlinespace
+Area Deprivation Index (numeric measurement, larger is more deprived) &  &  &  & \\
+\cellcolor{gray!10}{Mean (SD)} & \cellcolor{gray!10}{41 (27)} & \cellcolor{gray!10}{37 (26)} & \cellcolor{gray!10}{40 (27)} & \cellcolor{gray!10}{37 (27)}\\
+Missing & 101 (6.3\%) & 154 (7.3\%) & 38 (7.3\%) & 16 (5.9\%)\\
+\cellcolor{gray!10}{Family Conflict (numeric measurement, larger is more conflict)} & \cellcolor{gray!10}{} & \cellcolor{gray!10}{} & \cellcolor{gray!10}{} & \cellcolor{gray!10}{}\\
+Mean (SD) & 2.6 (1.6) & 1.3 (1.1) & 2.9 (1.6) & 1.4 (1.3)\\
+\addlinespace
+\cellcolor{gray!10}{Previous Suicide Attempt in Family} & \cellcolor{gray!10}{} & \cellcolor{gray!10}{} & \cellcolor{gray!10}{} & \cellcolor{gray!10}{}\\
+Yes & 86 (5\%) & 86 (4\%) & 46 (9\%) & 20 (7\%)\\
+\cellcolor{gray!10}{No} & \cellcolor{gray!10}{1421 (89\%)} & \cellcolor{gray!10}{1937 (91\%)} & \cellcolor{gray!10}{443 (85\%)} & \cellcolor{gray!10}{234 (86\%)}\\
+Missing & 92 (5.8\%) & 96 (4.5\%) & 32 (6.1\%) & 17 (6.3\%)\\
+\cellcolor{gray!10}{Peer Victimization (numeric measurement, larger is more severe)} & \cellcolor{gray!10}{} & \cellcolor{gray!10}{} & \cellcolor{gray!10}{} & \cellcolor{gray!10}{}\\
+\addlinespace
+Mean (SD) & 12 (3.5) & 11 (2.8) & 14 (4.5) & 13 (4.1)\\
+\cellcolor{gray!10}{Missing} & \cellcolor{gray!10}{5 (0.3\%)} & \cellcolor{gray!10}{26 (1.2\%)} & \cellcolor{gray!10}{1 (0.2\%)} & \cellcolor{gray!10}{2 (0.7\%)}\\
+School Safety (numeric measurement, larger is safer) &  &  &  & \\
+\cellcolor{gray!10}{Mean (SD)} & \cellcolor{gray!10}{19 (2.0)} & \cellcolor{gray!10}{21 (1.7)} & \cellcolor{gray!10}{19 (2.1)} & \cellcolor{gray!10}{21 (1.7)}\\
+Neighborhood Safety (numeric measurement, larger is safer) &  &  &  & \\
+\addlinespace
+\cellcolor{gray!10}{Mean (SD)} & \cellcolor{gray!10}{3.9 (0.80)} & \cellcolor{gray!10}{4.3 (0.71)} & \cellcolor{gray!10}{3.9 (0.80)} & \cellcolor{gray!10}{4.1 (0.76)}\\
+Structural Stigma (State level indicators of sexism from survey and implicit bias measures) &  &  &  & \\
+\cellcolor{gray!10}{Mean (SD)} & \cellcolor{gray!10}{-0.29 (0.86)} & \cellcolor{gray!10}{-0.20 (0.89)} & \cellcolor{gray!10}{-0.40 (0.83)} & \cellcolor{gray!10}{-0.41 (0.82)}\\
+Missing & 0 (0\%) & 1 (0.0\%) & 1 (0.2\%) & 0 (0\%)\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{t1flex}\NormalTok{(x)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning: fonts used in `flextable` are ignored because the `pdflatex` engine is
+## used and not `xelatex` or `lualatex`. You can avoid this warning by using the
+## `set_flextable_defaults(fonts_ignore=TRUE)` command or use a compatible engine
+## by defining `latex_engine: xelatex` in the YAML header of the R Markdown
+## document.
+\end{verbatim}
+
+\global\setlength{\Oldarrayrulewidth}{\arrayrulewidth}
+
+\global\setlength{\Oldtabcolsep}{\tabcolsep}
+
+\setlength{\tabcolsep}{2pt}
+
+\renewcommand*{\arraystretch}{1.5}
+
+
+
+\providecommand{\ascline}[3]{\noalign{\global\arrayrulewidth #1}\arrayrulecolor[HTML]{#2}\cline{#3}}
+
+\begin{longtable}[c]{|p{6.38in}|p{2.06in}|p{2.31in}|p{2.06in}|p{2.31in}}
+
+
+
+\ascline{1.5pt}{666666}{1-5}
+
+\multicolumn{1}{>{\centering}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} & \multicolumn{2}{>{\centering}m{\dimexpr 4.38in+2\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{Heterosexual}}} & \multicolumn{2}{>{\centering}m{\dimexpr 4.38in+2\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{Sexual\ Minority}}} \\
+
+\ascline{1.5pt}{666666}{1-5}
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{ }}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{Poor\ Parental\ Acceptance}}\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{\linebreak }}\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{(N=1599)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{Superior\ Parental\ Acceptance}}\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{\linebreak }}\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{(N=2119)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{Poor\ Parental\ Acceptance}}\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{\linebreak }}\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{(N=521)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{Superior\ Parental\ Acceptance}}\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{\linebreak }}\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{(N=271)}}} \\
+
+\ascline{1.5pt}{666666}{1-5}\endfirsthead 
+
+\ascline{1.5pt}{666666}{1-5}
+
+\multicolumn{1}{>{\centering}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} & \multicolumn{2}{>{\centering}m{\dimexpr 4.38in+2\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{Heterosexual}}} & \multicolumn{2}{>{\centering}m{\dimexpr 4.38in+2\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{Sexual\ Minority}}} \\
+
+\ascline{1.5pt}{666666}{1-5}
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{ }}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{Poor\ Parental\ Acceptance}}\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{\linebreak }}\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{(N=1599)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{Superior\ Parental\ Acceptance}}\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{\linebreak }}\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{(N=2119)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{Poor\ Parental\ Acceptance}}\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{\linebreak }}\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{(N=521)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{Superior\ Parental\ Acceptance}}\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{\linebreak }}\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{(N=271)}}} \\
+
+\ascline{1.5pt}{666666}{1-5}\endhead
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{\textbf{Age\ (years)}}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{  Mean\ (SD)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{9.9\ (0.63)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{9.9\ (0.62)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{9.9\ (0.64)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{10\ (0.63)}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{  Missing}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{1\ (0.1\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{0\ (0\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{0\ (0\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{0\ (0\%)}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{\textbf{Sex\ Assigned\ at\ Birth}}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{  Female}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{608\ (38\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{944\ (45\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{415\ (80\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{205\ (76\%)}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{  Male}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{990\ (62\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{1173\ (55\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{106\ (20\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{66\ (24\%)}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{  Missing}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{1\ (0.1\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{2\ (0.1\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{0\ (0\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{0\ (0\%)}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{\textbf{Number\ of\ Siblings}}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{  Mean\ (SD)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{1.5\ (1.3)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{1.6\ (1.3)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{1.2\ (1.1)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{1.1\ (1.0)}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{\textbf{Birth\ Order}}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{  Mean\ (SD)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{1.7\ (1.0)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{1.7\ (1.0)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{1.6\ (0.85)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{1.5\ (0.75)}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{  Missing}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{5\ (0.3\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{4\ (0.2\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{1\ (0.2\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{1\ (0.4\%)}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{\textbf{Household\ Income\ (scale\ of\ 1-10,\ 1\ is\ lowest\ income\ bracket)}}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{  1}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{22\ (1\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{41\ (2\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{6\ (1\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{2\ (1\%)}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{  2}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{19\ (1\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{22\ (1\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{2\ (0\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{2\ (1\%)}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{  3}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{13\ (1\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{18\ (1\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{10\ (2\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{1\ (0\%)}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{  4}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{27\ (2\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{32\ (2\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{8\ (2\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{2\ (1\%)}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{  5}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{31\ (2\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{35\ (2\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{7\ (1\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{9\ (3\%)}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{  6}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{64\ (4\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{52\ (2\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{14\ (3\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{3\ (1\%)}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{  7}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{73\ (5\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{79\ (4\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{31\ (6\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{13\ (5\%)}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{  8}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{90\ (6\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{106\ (5\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{25\ (5\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{16\ (6\%)}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{  9}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{304\ (19\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{488\ (23\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{95\ (18\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{57\ (21\%)}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{  10}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{132\ (8\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{230\ (11\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{43\ (8\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{36\ (13\%)}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{  Missing}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{824\ (51.5\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{1016\ (47.9\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{280\ (53.7\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{130\ (48.0\%)}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{\textbf{Area\ Deprivation\ Index\ (numeric\ measurement,\ larger\ is\ more\ deprived)}}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{  Mean\ (SD)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{41\ (27)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{37\ (26)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{40\ (27)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{37\ (27)}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{  Missing}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{101\ (6.3\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{154\ (7.3\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{38\ (7.3\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{16\ (5.9\%)}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{\textbf{Family\ Conflict\ (numeric\ measurement,\ larger\ is\ more\ conflict)}}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{  Mean\ (SD)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{2.6\ (1.6)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{1.3\ (1.1)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{2.9\ (1.6)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{1.4\ (1.3)}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{\textbf{Previous\ Suicide\ Attempt\ in\ Family}}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{  Yes}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{86\ (5\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{86\ (4\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{46\ (9\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{20\ (7\%)}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{  No}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{1421\ (89\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{1937\ (91\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{443\ (85\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{234\ (86\%)}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{  Missing}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{92\ (5.8\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{96\ (4.5\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{32\ (6.1\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{17\ (6.3\%)}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{\textbf{Peer\ Victimization\ (numeric\ measurement,\ larger\ is\ more\ severe)}}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{  Mean\ (SD)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{12\ (3.5)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{11\ (2.8)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{14\ (4.5)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{13\ (4.1)}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{  Missing}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{5\ (0.3\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{26\ (1.2\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{1\ (0.2\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{2\ (0.7\%)}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{\textbf{School\ Safety\ (numeric\ measurement,\ larger\ is\ safer)}}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{  Mean\ (SD)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{19\ (2.0)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{21\ (1.7)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{19\ (2.1)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{21\ (1.7)}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{\textbf{Neighborhood\ Safety\ (numeric\ measurement,\ larger\ is\ safer)}}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{  Mean\ (SD)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{3.9\ (0.80)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{4.3\ (0.71)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{3.9\ (0.80)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{4.1\ (0.76)}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{\textbf{Structural\ Stigma\ (State\ level\ indicators\ of\ sexism\ from\ survey\ and\ implicit\ bias\ measures)}}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{  Mean\ (SD)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{-0.29\ (0.86)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{-0.20\ (0.89)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{-0.40\ (0.83)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{-0.41\ (0.82)}}} \\
+
+
+
+
+
+\multicolumn{1}{>{\raggedright}m{\dimexpr 6.38in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{  Missing}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{0\ (0\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{1\ (0.0\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.06in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{1\ (0.2\%)}}} & \multicolumn{1}{>{\centering}m{\dimexpr 2.31in+0\tabcolsep}}{\textcolor[HTML]{000000}{\fontsize{11}{11}\selectfont{0\ (0\%)}}} \\
+
+\ascline{1.5pt}{666666}{1-5}
+
+
+
+\end{longtable}
+
+
+
+\arrayrulecolor[HTML]{000000}
+
+\global\setlength{\arrayrulewidth}{\Oldarrayrulewidth}
+
+\global\setlength{\tabcolsep}{\Oldtabcolsep}
+
+\renewcommand*{\arraystretch}{1}
+
+\end{document}

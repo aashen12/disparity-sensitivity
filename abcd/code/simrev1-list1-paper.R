@@ -1,3 +1,4 @@
+# this script runs the amplification for the relaxed definition of Z, as suggested by reviewer
 # Performs amplification of the sensitivity analysis
 # Analysis of list 1
 rm(list = ls())
@@ -33,8 +34,8 @@ Z_method <- "worry_upset"
 
 outcome <- "ideation" # ideation or attempt
 
-df_x <- read_csv(paste0("abcd/data/list1_X_", Z_method, "_", outcome, ".csv"))
-df_yz <- read_csv(paste0("abcd/data/list1_YZGW_", Z_method, "_", outcome, ".csv"))
+df_x <- read_csv(paste0("abcd/data/list1_simrev1_X_", Z_method, "_", outcome, ".csv"))
+df_yz <- read_csv(paste0("abcd/data/list1_simrev1_YZGW_", Z_method, "_", outcome, ".csv"))
 
 mediators <- c("src_subject_id")
 mediators <- c("src_subject_id", "family_mental_health")
@@ -71,6 +72,7 @@ mu1
 mu10
 mu0
 
+mu1-mu0
 mu1-mu10
 mu10-mu0
 
@@ -113,12 +115,12 @@ generatePlot <- function(num_cov_lbl = 8, num_pt_lbl = 3, psize = 6, estimand = 
                    min(which(out$X1 <= 0))) # first negative index
   
   Lam_pe <- out$lam[cross_ind]
-  Lam_05 <- ifelse(estimand == "reduction", 1.02, 1.53)
+  Lam_05 <- ifelse(estimand == "reduction", 1, 1.53)
   print(paste0("Point Est Lambda: ", Lam_pe))
   print(paste0("Point Est Lambda: ", Lam_05))
   # even if we care about red or res, we use point bc the lambda already takes
   # into account whether we care about red or res
-
+  
   amplification <- decompsens::decompAmplify(G, Z, XA, XN, Y, w, mu_10=mu10, 
                                              Lambda = Lam_pe, e1 = e1, e0 = e0)
   # Amp for 0.05
@@ -261,10 +263,10 @@ generatePlot <- function(num_cov_lbl = 8, num_pt_lbl = 3, psize = 6, estimand = 
 
 red_plot <- generatePlot(num_cov_lbl = 12, num_pt_lbl = 3, psize = 6.5, estimand = "red")
 red_plot
-ggsave("abcd/figs/reduc_ideation.pdf", width = 10.5, height = 9)
+ggsave("abcd/figs/simrev1_reduc_ideation.pdf", width = 10.5, height = 9)
 
 resid_plot <- generatePlot(num_cov_lbl = 12, num_pt_lbl = 3, psize = 6.5, estimand = "resid")
 resid_plot
-ggsave("abcd/figs/resid_ideation.pdf", width = 10.5, height = 9)
+ggsave("abcd/figs/simrev1_resid_ideation.pdf", width = 10.5, height = 9)
 
 

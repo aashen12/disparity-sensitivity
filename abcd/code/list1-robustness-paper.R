@@ -14,7 +14,7 @@ library(jointVIP)
 library(latex2exp)
 
 options(na.action='na.pass')
-source("functions.R")
+source("abcd/code/functions.R")
 set.seed(122357)
 
 numCores <- parallel::detectCores()
@@ -32,10 +32,10 @@ Z_method <- "worry_upset"
 
 outcome <- "ideation" # ideation or attempt
 
-id_to_drop <- readRDS("../data/si_baseline_ids.rds")
-df_x <- read_csv(paste0("../data/list1_X_", Z_method, "_", outcome, ".csv")) %>% 
+id_to_drop <- readRDS("abcd/data/si_baseline_ids.rds")
+df_x <- read_csv(paste0("abcd/data/list1_X_", Z_method, "_", outcome, ".csv")) %>% 
   filter(!src_subject_id %in% id_to_drop)
-df_yz <- read_csv(paste0("../data/list1_robust_YZGW_", Z_method, "_", outcome, ".csv"))
+df_yz <- read_csv(paste0("abcd/data/list1_robust_YZGW_", Z_method, "_", outcome, ".csv"))
 all(df_x$src_subject_id == df_yz$src_subject_id)
 
 mediators <- c("src_subject_id")
@@ -127,7 +127,10 @@ generatePlot <- function(num_cov_lbl = 8, num_pt_lbl = 3, psize = 6, estimand = 
                    min(which(out$X1 <= 0))) # first negative index
   
   Lam_pe <- out$lam[cross_ind]
-  Lam_05 <- 1.02
+  # even if we care about red or res, we use point bc the lambda already takes
+  # into account whether we care about red or res
+  
+  Lam_05 <- ifelse(estimand == "reduction", 1.04, 1.6)
   print(paste0("Point Est Lambda: ", Lam_pe))
   print(paste0("Point Est Lambda: ", Lam_05))
   # even if we care about red or res, we use point bc the lambda already takes
@@ -135,22 +138,28 @@ generatePlot <- function(num_cov_lbl = 8, num_pt_lbl = 3, psize = 6, estimand = 
   
   amplification <- decompsens::decompAmplify(G, Z, XA, XN, Y, w, mu_10=mu10, 
                                              Lambda = Lam_pe, e1 = e1, e0 = e0)
+  # Amp for 0.05
+  amplification05 <- decompsens::decompAmplify(G, Z, XA, XN, Y, w, mu_10=mu10, 
+                                               Lambda = Lam_05, e1 = e1, e0 = e0)
+  
   # amp for point est
   bounds <- amplification$maxbias
+  bounds05 <- amplification05$maxbias
   
   strongest_cov_df <- amplification[[1]] %>% drop_na()
   max_imbal_stnd <- amplification$max_imbal_stnd
   max_betau_01 <- amplification$max_beta
-  
   maxbias <- max(abs(bounds)) 
   max_betau_01 <- max(strongest_cov_df$coeff)
   max_imbal <- max(strongest_cov_df$imbal)
   
   
-  # Amp for 0.05
-  amplification05 <- decompsens::decompAmplify(G, Z, XA, XN, Y, w, mu_10=mu10, 
-                                               Lambda = Lam_05, e1 = e1, e0 = e0)
-  maxbias05 <- amplification05$maxbias
+  strongest_cov_df_05 <- amplification05[[1]] %>% drop_na()
+  max_imbal_stnd_05 <- amplification05$max_imbal_stnd
+  max_betau_01_05 <- amplification05$max_beta
+  maxbias05 <- max(abs(bounds05))
+  max_betau_01_05 <- max(strongest_cov_df_05$coeff)
+  max_imbal_05 <- max(strongest_cov_df_05$imbal)
   
   if (estimand == "residual") {
     beta <- seq(max(0, min(strongest_cov_df$coeff) - 0.2), max(strongest_cov_df$coeff) + 0.5, by = 0.01)
@@ -187,9 +196,9 @@ generatePlot <- function(num_cov_lbl = 8, num_pt_lbl = 3, psize = 6, estimand = 
     metR::geom_text_contour(aes(z = bias), 
                             breaks = bins,
                             stroke = 0.2, skip = 0) + 
-    # metR::geom_contour_fill(breaks = c(maxbias05, 1000 * maxbias05), fill='gray55', alpha = 0.2) +
-    # geom_contour(breaks = c(maxbias05), col='gray62', linewidth = 1.2, alpha = 2) + 
-    # metR::geom_text_contour(aes(z = maxbias05), stroke = 0.2) + 
+    metR::geom_contour_fill(breaks = c(maxbias05, 1000 * maxbias05), fill='gray55', alpha = 0.2) +
+    geom_contour(breaks = c(maxbias05), col='gray62', linewidth = 1.2, alpha = 2) +
+    metR::geom_text_contour(aes(z = maxbias05), stroke = 0.2) +
     metR::geom_contour_fill(breaks = c(maxbias, 1000 * maxbias), fill='dodgerblue3', alpha = switch(estimand, "reduction" = 0.2, "residual" = 0.26)) +
     geom_contour(breaks = c(maxbias), col='dodgerblue3', linewidth = 1.2, alpha = 2) + 
     metR::geom_text_contour(aes(z = maxbias), stroke = 0.2) + theme_minimal()
@@ -251,6 +260,7 @@ generatePlot <- function(num_cov_lbl = 8, num_pt_lbl = 3, psize = 6, estimand = 
       geom_text(x = 0.65, y = 0.2,
                 label = paste0("Bias: ", round(maxbias, 3)), size = 8, color = "black") 
     p_out
+    p1_full_unscaled
   } else {
     p_out <- p1_full_unscaled + 
       geom_text(x = 0.7, y = 0.53,
@@ -259,6 +269,7 @@ generatePlot <- function(num_cov_lbl = 8, num_pt_lbl = 3, psize = 6, estimand = 
       geom_text(x = 0.7, y = 0.48,
                 label = paste0("Bias: ", round(maxbias, 3)), size = 8, color = "black") 
     p_out
+    p1_full_unscaled
   }
 }
 
@@ -269,10 +280,10 @@ aspect_ratio
 
 red_plot <- generatePlot(num_cov_lbl = 12, num_pt_lbl = 3, psize = 6.5, estimand = "red")
 red_plot
-ggsave("../figs/reduc_ideation_robust.pdf", width = 10.5, height = 9)
+ggsave("abcd/figs/reduc_ideation_robust.pdf", width = 10.5, height = 9)
 
 
 resid_plot <- generatePlot(num_cov_lbl = 12, num_pt_lbl = 3, psize = 6.5, estimand = "resid")
 resid_plot
-ggsave("../figs/resid_ideation_robust.pdf", width = 10.5, height = 9)
+ggsave("abcd/figs/resid_ideation_robust.pdf", width = 10.5, height = 9)
 
